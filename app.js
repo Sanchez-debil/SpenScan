@@ -2047,3 +2047,270 @@ document.addEventListener('click', e => {
   if (p === 'score')  setTimeout(renderCFOScore,  50);
   if (p === 'whatif') setTimeout(renderRunwayEngine, 50);
 });
+
+// ══════════════════════════════════════════════
+// CHUNK 2 — AI Spend Intelligence + Revenue Risk
+// ══════════════════════════════════════════════
+
+const SPEND_INTEL = {
+  teamSize: 12,
+  totalSpend: 93_500,
+  marketPerPerson: 7_200, // середній SaaS spend/особу для IT 12 осіб
+
+  tools: [
+    { name:'Figma Pro',       cat:'Дизайн',    cost:4_480, seats:8,  active:5,  market:3_500, issue:'unused',    unusedN:3, savings:1_680, alt:null,                      icon:'🎨' },
+    { name:'Zoom Business',   cat:'Відео',     cost:3_560, seats:12, active:9,  market:2_400, issue:'duplicate', unusedN:0, savings:3_560, alt:'Microsoft Teams',         icon:'📹' },
+    { name:'Slack Business+', cat:'Месенджер', cost:7_500, seats:12, active:11, market:6_800, issue:'ok',        unusedN:1, savings:0,     alt:null,                      icon:'💬' },
+    { name:'AWS Cloud',       cat:'Хмара',     cost:16_800,seats:null,active:null,market:12_000,issue:'overpriced',unusedN:0,savings:4_800,alt:'Reserved Instances −29%', icon:'☁️' },
+    { name:'Tableau',         cat:'Аналітика', cost:5_840, seats:5,  active:2,  market:0,     issue:'free_alt',  unusedN:3, savings:5_840, alt:'Looker Studio (безкошт.)',icon:'📊' },
+    { name:'Adobe CC',        cat:'Дизайн',    cost:12_800,seats:15, active:10, market:10_500, issue:'unused',   unusedN:5, savings:4_267, alt:null,                      icon:'🖼️' },
+    { name:'Microsoft Teams', cat:'Відео',     cost:3_680, seats:12, active:8,  market:3_200, issue:'ok',        unusedN:4, savings:0,     alt:null,                      icon:'📹' },
+    { name:'Miro',            cat:'Дошка',     cost:3_520, seats:8,  active:4,  market:1_500, issue:'unused',    unusedN:4, savings:1_760, alt:'FigJam (безкошт.)',       icon:'📌' },
+    { name:'Notion Business', cat:'Знання',    cost:2_880, seats:12, active:10, market:2_500, issue:'ok',        unusedN:2, savings:0,     alt:null,                      icon:'📝' },
+  ],
+};
+
+const REVENUE_RISK = {
+  total: 996_000,
+  clients: [
+    { name:'Acme Corp',      ini:'AC', mrr:220_000, share:22.1, days:2,   late:0, trend:'stable',   risk:'low',    col:'green' },
+    { name:'Beta Solutions', ini:'BS', mrr:185_000, share:18.6, days:45,  late:3, trend:'late',     risk:'high',   col:'red'   },
+    { name:'Gamma Tech',     ini:'GT', mrr:156_000, share:15.7, days:15,  late:0, trend:'stable',   risk:'low',    col:'green' },
+    { name:'Delta Finance',  ini:'DF', mrr:128_000, share:12.9, days:8,   late:0, trend:'growing',  risk:'low',    col:'green' },
+    { name:'Epsilon Ltd',    ini:'EL', mrr:98_000,  share:9.8,  days:30,  late:1, trend:'declining',risk:'medium', col:'amber' },
+    { name:'Zeta Group',     ini:'ZG', mrr:68_000,  share:6.8,  days:20,  late:0, trend:'stable',   risk:'low',    col:'green' },
+    { name:'Інші ×8',        ini:'··', mrr:141_000, share:14.1, days:null,late:0, trend:'stable',   risk:'low',    col:'green' },
+  ],
+  insights: [
+    { type:'critical', text:'Beta Solutions не платить 45 днів (3-й цикл підряд) — ₴185K/міс під ризиком' },
+    { type:'critical', text:'22.1% доходу від одного клієнта (Acme Corp) — критична залежність' },
+    { type:'warning',  text:'Epsilon Ltd спадний тренд 2 міс. підряд — ймовірний churn' },
+    { type:'info',     text:'Delta Finance росте +18% MoM — можливість для upsell / розширення' },
+  ],
+};
+
+// ── Spend Intelligence renderer ────────────────────────
+function renderSpendIntel() {
+  const el = document.getElementById('spendIntelPanel');
+  if (!el) return;
+
+  const si = SPEND_INTEL;
+  const yourPP = Math.round(si.totalSpend / si.teamSize);
+  const pct    = Math.round((yourPP - si.marketPerPerson) / si.marketPerPerson * 100);
+  const totalWaste = si.tools.reduce((s, t) => s + t.savings, 0);
+  const issueCount = si.tools.filter(t => t.issue !== 'ok').length;
+
+  const ISSUE_MAP = {
+    unused:    { label:'Невикор. місця', col:'var(--amber)', bg:'var(--amber-bg)' },
+    duplicate: { label:'Дублікат',       col:'var(--red)',   bg:'var(--red-bg)'   },
+    free_alt:  { label:'Є безкошт. альт.',col:'var(--blue)', bg:'var(--blue-bg)'  },
+    overpriced:{ label:'Переплата',      col:'var(--red)',   bg:'var(--red-bg)'   },
+    ok:        { label:'OK',             col:'var(--green)', bg:'var(--green-bg)' },
+  };
+
+  const rows = si.tools.map(t => {
+    const im = ISSUE_MAP[t.issue] || ISSUE_MAP.ok;
+    const usageBar = t.seats ? Math.round(t.active / t.seats * 100) : null;
+    const usageHtml = usageBar !== null
+      ? `<div style="display:flex;align-items:center;gap:6px;min-width:80px;">
+           <div style="flex:1;height:4px;background:var(--cream3);border-radius:2px;">
+             <div style="width:${usageBar}%;height:100%;background:${usageBar>=80?'var(--green)':usageBar>=50?'var(--amber)':'var(--red)'};border-radius:2px;"></div>
+           </div>
+           <span style="font-size:10.5px;font-family:'DM Mono',monospace;">${t.active}/${t.seats}</span>
+         </div>`
+      : `<span style="font-size:11px;color:var(--warm);">N/A</span>`;
+    const savHtml = t.savings > 0
+      ? `<span style="color:var(--green);font-weight:700;font-family:'DM Mono',monospace;">₴${(t.savings/1000).toFixed(1)}K</span>`
+      : `<span style="color:var(--warm);">—</span>`;
+    const altHtml = t.alt
+      ? `<span style="font-size:11px;color:var(--blue);">${esc(t.alt)}</span>`
+      : `<span style="color:var(--warm);font-size:11px;">—</span>`;
+    return `<tr>
+      <td><span style="font-size:14px;margin-right:6px;">${t.icon}</span><span style="font-weight:600;">${esc(t.name)}</span></td>
+      <td style="font-family:'DM Mono',monospace;font-size:12.5px;">₴${(t.cost/1000).toFixed(1)}K</td>
+      <td>${usageHtml}</td>
+      <td><span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px;background:${im.bg};color:${im.col};">${im.label}</span></td>
+      <td>${savHtml}</td>
+      <td>${altHtml}</td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="card" style="border-top:3px solid var(--ink);margin-bottom:14px;">
+      <div class="card-hd"><div>
+        <div class="card-t">AI Spend Intelligence</div>
+        <div class="card-s">Аналіз SaaS стека відносно ринкового бенчмарку</div>
+      </div></div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+        <div style="background:var(--red-bg);border:1px solid #F0C4C0;border-radius:10px;padding:14px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--red);margin-bottom:6px;">Ви переплачуєте</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--red);">+${pct}%</div>
+          <div style="font-size:11.5px;color:var(--red);margin-top:3px;">vs ринку для ${si.teamSize} осіб</div>
+        </div>
+        <div style="background:var(--amber-bg);border:1px solid #F0DDB8;border-radius:10px;padding:14px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--amber);margin-bottom:6px;">Марнотратство/міс</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--amber);">₴${(totalWaste/1000).toFixed(0)}K</div>
+          <div style="font-size:11.5px;color:var(--amber);margin-top:3px;">₴${(totalWaste*12/1000).toFixed(0)}K/рік</div>
+        </div>
+        <div style="background:var(--green-bg);border:1px solid #B8DFC5;border-radius:10px;padding:14px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--green);margin-bottom:6px;">Проблем знайдено</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--green);">${issueCount}</div>
+          <div style="font-size:11.5px;color:var(--green);margin-top:3px;">з ${si.tools.length} інструментів</div>
+        </div>
+      </div>
+
+      <div style="background:var(--cream);border-radius:10px;padding:12px 14px;margin-bottom:16px;border-left:3px solid var(--red);">
+        <span style="font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--red);margin-right:8px;">BENCHMARK</span>
+        <span style="font-size:12.5px;color:var(--charcoal);">
+          Ви платите <strong>₴${yourPP.toLocaleString()}/особу/міс</strong> за SaaS.
+          Середнє для IT-компаній вашого розміру — <strong>₴${si.marketPerPerson.toLocaleString()}</strong>.
+          Різниця: <strong style="color:var(--red);">+₴${(yourPP-si.marketPerPerson).toLocaleString()}/особу</strong>.
+        </span>
+      </div>
+
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Інструмент</th><th>Вартість/міс</th><th>Використання</th><th>Статус</th><th>Економія</th><th>Альтернатива</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// ── Revenue Risk renderer ──────────────────────────────
+function renderRevenueRisk() {
+  const el = document.getElementById('revenueRiskPanel');
+  if (!el) return;
+
+  const rr = REVENUE_RISK;
+  const atRisk = rr.clients.filter(c => c.risk !== 'low').reduce((s, c) => s + c.mrr, 0);
+  const late   = rr.clients.filter(c => c.late > 0).length;
+  const topShare = Math.max(...rr.clients.map(c => c.share));
+
+  const RISK_MAP = {
+    low:    { label:'Низький',   col:'var(--green)', bg:'var(--green-bg)' },
+    medium: { label:'Середній',  col:'var(--amber)', bg:'var(--amber-bg)' },
+    high:   { label:'Високий',   col:'var(--red)',   bg:'var(--red-bg)'   },
+  };
+  const TREND_MAP = {
+    stable:   '→', growing: '↑', declining: '↓', late: '⚠',
+  };
+
+  // Concentration bar
+  const conc = rr.clients.map(c => {
+    const w = c.share;
+    const colMap = { green:'var(--green)', amber:'var(--amber)', red:'var(--red)' };
+    return `<div title="${esc(c.name)} — ${c.share}%" style="width:${w}%;height:100%;background:${colMap[c.col]||'var(--blue)'};position:relative;min-width:2px;">
+      <div style="position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;white-space:nowrap;color:${colMap[c.col]};display:none;" class="concLabel">${c.ini}</div>
+    </div>`;
+  }).join('');
+
+  const rows = rr.clients.map(c => {
+    const rm = RISK_MAP[c.risk] || RISK_MAP.low;
+    const daysBadge = c.days === null ? '—'
+      : c.days <= 7  ? `<span style="color:var(--green);font-weight:700;">${c.days} дн.</span>`
+      : c.days <= 20 ? `<span style="color:var(--amber);font-weight:700;">${c.days} дн.</span>`
+      : `<span style="color:var(--red);font-weight:700;">${c.days} дн. ⚠</span>`;
+    const lateBadge = c.late > 0
+      ? `<span style="font-size:9px;background:var(--red-bg);color:var(--red);border-radius:20px;padding:1px 6px;font-weight:700;">${c.late}× поспіль</span>`
+      : '';
+    const trend = TREND_MAP[c.trend] || '→';
+    const trendCol = c.trend==='growing'?'var(--green)':c.trend==='declining'||c.trend==='late'?'var(--red)':'var(--warm)';
+    return `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:28px;height:28px;border-radius:7px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;font-family:'DM Mono',monospace;color:var(--ink);flex-shrink:0;">${esc(c.ini)}</div>
+          <div>
+            <div style="font-weight:600;font-size:13px;">${esc(c.name)}</div>
+            ${lateBadge}
+          </div>
+        </div>
+      </td>
+      <td style="font-family:'DM Mono',monospace;font-weight:700;">₴${(c.mrr/1000).toFixed(0)}K</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <div style="flex:1;height:4px;background:var(--cream3);border-radius:2px;min-width:40px;">
+            <div style="width:${Math.min(100,c.share/topShare*100)}%;height:100%;background:var(--ink);border-radius:2px;"></div>
+          </div>
+          <span style="font-size:11px;font-weight:600;">${c.share}%</span>
+        </div>
+      </td>
+      <td>${daysBadge}</td>
+      <td><span style="font-size:15px;color:${trendCol};">${trend}</span></td>
+      <td><span style="font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;background:${rm.bg};color:${rm.col};">${rm.label}</span></td>
+    </tr>`;
+  }).join('');
+
+  const alerts = rr.insights.map(a => {
+    const t = {critical:{b:'var(--red)',i:'!'},warning:{b:'var(--amber)',i:'↑'},info:{b:'var(--blue)',i:'→'}}[a.type]||{b:'var(--blue)',i:'→'};
+    const bg = {critical:'var(--red-bg)',warning:'var(--amber-bg)',info:'var(--blue-bg)'}[a.type]||'var(--blue-bg)';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:${bg};border-radius:9px;border-left:3px solid ${t.b};">
+      <span style="font-size:14px;font-weight:800;color:${t.b};flex-shrink:0;">${t.i}</span>
+      <span style="font-size:12.5px;color:var(--charcoal);">${esc(a.text)}</span>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:14px;margin-top:14px;">
+      <div class="card" style="border-top:3px solid var(--red);">
+        <div class="card-hd"><div>
+          <div class="card-t">Revenue Risk Detection</div>
+          <div class="card-s">Ризики відтоку, концентрації та затримок оплати</div>
+        </div></div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+          <div style="background:var(--red-bg);border:1px solid #F0C4C0;border-radius:10px;padding:14px;text-align:center;">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--red);margin-bottom:6px;">Під ризиком</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--red);">₴${(atRisk/1000).toFixed(0)}K</div>
+            <div style="font-size:11px;color:var(--red);margin-top:3px;">/міс від ${rr.clients.filter(c=>c.risk!=='low').length} клієнтів</div>
+          </div>
+          <div style="background:var(--amber-bg);border:1px solid #F0DDB8;border-radius:10px;padding:14px;text-align:center;">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--amber);margin-bottom:6px;">Затримки оплати</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--amber);">${late}</div>
+            <div style="font-size:11px;color:var(--amber);margin-top:3px;">клієнт${late===1?'':'и'} прострочено</div>
+          </div>
+          <div style="background:var(--cream);border:1.5px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warm);margin-bottom:6px;">Топ концентрація</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink);">${topShare}%</div>
+            <div style="font-size:11px;color:var(--warm);margin-top:3px;">від одного клієнта</div>
+          </div>
+        </div>
+
+        <!-- Concentration bar -->
+        <div style="margin-bottom:16px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warm);margin-bottom:6px;">Розподіл доходу по клієнтах</div>
+          <div style="display:flex;height:18px;border-radius:9px;overflow:hidden;gap:1px;">${conc}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+            ${rr.clients.map(c=>{
+              const colMap={green:'var(--green)',amber:'var(--amber)',red:'var(--red)'};
+              return `<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--charcoal);">
+                <div style="width:8px;height:8px;border-radius:2px;background:${colMap[c.col]||'var(--blue)'};flex-shrink:0;"></div>
+                ${esc(c.ini)} ${c.share}%</div>`;
+            }).join('')}
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">${alerts}</div>
+
+        <div class="tbl">
+          <table>
+            <thead><tr><th>Клієнт</th><th>MRR</th><th>Частка</th><th>Остання оплата</th><th>Тренд</th><th>Ризик</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Init Chunk 2 ─────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  renderSpendIntel();
+  renderRevenueRisk();
+});
+
+document.addEventListener('click', e => {
+  const p = e.target.closest('.sb-item[data-page]')?.dataset?.page;
+  if (p === 'audit')   setTimeout(renderSpendIntel,  50);
+  if (p === 'revenue') setTimeout(renderRevenueRisk, 50);
+});
