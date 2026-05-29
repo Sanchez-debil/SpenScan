@@ -159,6 +159,7 @@ const PAGE_TITLES = {
   forecast:'Прогнозування', fraud:'Виявлення шахрайства', benchmark:'Бенчмарк',
   agents:'AI Агенти', score:'AI Score', notifications:'Сповіщення',
   whatif:'What If Сценарії', investor:'Investor Mode', reports:'Звіти',
+  subscription:'Підписка', settings:'Налаштування',
 };
 const PAGE_SUBS = {
   overview:'Травень 2026 · Монобанк Бізнес', cashflow:'Рух коштів · Травень 2026',
@@ -171,6 +172,7 @@ const PAGE_SUBS = {
   notifications:'Розумні сповіщення в реальному часі',
   whatif:'Моделювання фінансових сценаріїв',
   investor:'Звіти та аналітика для інвесторів', reports:'Всі звіти',
+  subscription:'Поточний план та білінг', settings:'Конфігурація акаунту',
 };
 
 // nav() stays global so existing inline onclick attrs keep working
@@ -302,6 +304,19 @@ function saveApiKey() {
   input.value = '•'.repeat(16);
   const s = $('apiStatus');
   if (s) { s.textContent = 'Ключ збережено — AI готовий'; s.style.color = '#6EE7A0'; }
+}
+
+function saveApiKeyFromSettings() {
+  const input = $('settingsApiKey');
+  if (!input) return;
+  const key = input.value.trim();
+  if (!key.startsWith('sk-ant-')) { showToast('Невірний ключ — має починатись з sk-ant-', 'error'); return; }
+  state.apiKey = key;
+  const main = $('apiKeyInput');
+  if (main) { main.value = '•'.repeat(16); }
+  input.value = '•'.repeat(16);
+  $('apiBanner') && ($('apiBanner').style.display = 'none');
+  showToast('API ключ збережено — AI готовий', 'success');
 }
 
 async function callClaude(system, messages, maxTokens = 800) {
