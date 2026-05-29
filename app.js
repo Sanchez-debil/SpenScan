@@ -2314,3 +2314,273 @@ document.addEventListener('click', e => {
   if (p === 'audit')   setTimeout(renderSpendIntel,  50);
   if (p === 'revenue') setTimeout(renderRevenueRisk, 50);
 });
+
+// ══════════════════════════════════════════════
+// CHUNK 3 — AI Actions + Board Report Generator
+// ══════════════════════════════════════════════
+
+const AI_ACTIONS = [
+  { id:'cancel-zoom',    icon:'🚫', cat:'SaaS',    title:'Скасувати Zoom Business',
+    desc:'Дублює Microsoft Teams. Економія ₴3,560/міс → Score +4 бали',
+    impact:'+4 Score · ₴3,560/міс', confirm:'Скасувати підписку Zoom Business? Зберегти ₴42,720/рік.', type:'cancel' },
+  { id:'cancel-tableau', icon:'📊', cat:'SaaS',    title:'Замінити Tableau на Looker Studio',
+    desc:'Looker Studio безкоштовний. Active seats: 2/5. ₴5,840/міс зекономите',
+    impact:'+5 Score · ₴5,840/міс', confirm:'Перейти з Tableau на Looker Studio (Google, безкошт.)?', type:'cancel' },
+  { id:'remind-beta',    icon:'📧', cat:'Revenue', title:'Нагадування Beta Solutions',
+    desc:'45 днів прострочення · 3-й цикл підряд · ₴185K під ризиком',
+    impact:'₴185K MRR', confirm:null, type:'email' },
+  { id:'reduce-figma',   icon:'🎨', cat:'SaaS',    title:'Знизити Figma до 5 місць',
+    desc:'Active seats: 5/8. Платите за 3 невикористані місця (₴1,680/міс)',
+    impact:'+3 Score · ₴1,680/міс', confirm:'Знизити план Figma з 8 до 5 місць?', type:'cancel' },
+  { id:'aws-reserved',   icon:'☁️', cat:'Infra',   title:'AWS Reserved Instances',
+    desc:'Переключити On-Demand → Reserved 1yr. Економія 29% = ₴4,800/міс',
+    impact:'+6 Score · ₴4,800/міс', confirm:'Переключити AWS на Reserved Instances? Потрібен devops доступ.', type:'delegate' },
+  { id:'freeze-mkt',     icon:'❄️', cat:'Budget',  title:'Заморозити маркетинг Q2',
+    desc:'Маркетинг ROI нижчий норми 2 місяці підряд. Перерозподілити бюджет',
+    impact:'₴8,000/міс вивільниться', confirm:'Заморозити бюджет маркетингу до кінця Q2?', type:'freeze' },
+];
+
+const ACTION_STATE = {}; // id → 'pending' | 'loading' | 'done' | 'error'
+
+function renderAIActions() {
+  const el = document.getElementById('aiActionsCard');
+  if (!el) return;
+
+  const done  = Object.values(ACTION_STATE).filter(s => s === 'done').length;
+  const total = AI_ACTIONS.length;
+
+  const items = AI_ACTIONS.map(a => {
+    const st = ACTION_STATE[a.id] || 'pending';
+    const CAT_COL = { SaaS:'var(--blue)', Revenue:'var(--green)', Infra:'var(--amber)', Budget:'var(--red)' };
+    const catCol  = CAT_COL[a.cat] || 'var(--warm)';
+
+    let btnHtml;
+    if (st === 'done') {
+      btnHtml = `<button disabled style="padding:7px 16px;border-radius:7px;background:var(--green-bg);color:var(--green);border:1px solid #B8DFC5;font-size:12px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:default;">✓ Виконано</button>`;
+    } else if (st === 'loading') {
+      btnHtml = `<button disabled style="padding:7px 16px;border-radius:7px;background:var(--cream2);color:var(--warm);border:1px solid var(--border);font-size:12px;font-family:'DM Sans',sans-serif;">…</button>`;
+    } else {
+      const label = { cancel:'Скасувати', email:'Надіслати', delegate:'Делегувати', freeze:'Заморозити' }[a.type] || 'Виконати';
+      const bg    = { cancel:'var(--ink)', email:'var(--ink)', delegate:'var(--cream2)', freeze:'var(--red-bg)' }[a.type];
+      const col   = { cancel:'var(--cream)', email:'var(--cream)', delegate:'var(--charcoal)', freeze:'var(--red)' }[a.type];
+      const brd   = { cancel:'none', email:'none', delegate:'1.5px solid var(--border)', freeze:'1px solid #F0C4C0' }[a.type];
+      btnHtml = `<button onclick="executeAction('${a.id}')" style="padding:7px 16px;border-radius:7px;background:${bg};color:${col};border:${brd};font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:opacity .15s;">${label}</button>`;
+    }
+
+    return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);" id="action-row-${a.id}">
+      <div style="font-size:20px;flex-shrink:0;">${a.icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">
+          <span style="font-size:13px;font-weight:700;color:var(--ink);">${esc(a.title)}</span>
+          <span style="font-size:9.5px;font-weight:800;letter-spacing:.04em;padding:1px 7px;border-radius:20px;background:var(--cream2);color:${catCol};">${esc(a.cat)}</span>
+        </div>
+        <div style="font-size:12px;color:var(--warm);">${esc(a.desc)}</div>
+        <div style="font-size:11px;font-weight:600;color:var(--green);margin-top:2px;">${esc(a.impact)}</div>
+      </div>
+      <div style="flex-shrink:0;">${btnHtml}</div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="card" style="border-top:3px solid var(--ink);margin-bottom:14px;">
+      <div class="card-hd">
+        <div>
+          <div class="card-t">AI Actions</div>
+          <div class="card-s">Рекомендовані дії · ${done}/${total} виконано</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-size:11px;font-weight:700;color:var(--green);">
+            Загальна економія: ₴${((3560+5840+1680+4800+8000)/1000).toFixed(0)}K/міс
+          </div>
+        </div>
+      </div>
+      <div style="padding:0 4px;">${items}</div>
+    </div>`;
+}
+
+async function executeAction(id) {
+  const action = AI_ACTIONS.find(a => a.id === id);
+  if (!action) return;
+
+  if (action.type === 'email') {
+    _generateReminder(action);
+    return;
+  }
+
+  if (action.confirm && !confirm(action.confirm)) return;
+
+  ACTION_STATE[id] = 'loading';
+  renderAIActions();
+
+  await new Promise(r => setTimeout(r, 800 + Math.random() * 600));
+
+  ACTION_STATE[id] = 'done';
+  renderAIActions();
+
+  const msgs = {
+    'cancel-zoom':    'Zoom Business скасовано. Економія ₴3,560/міс зафіксована.',
+    'cancel-tableau': 'Tableau скасовано. Looker Studio — безкоштовна альтернатива.',
+    'reduce-figma':   'Figma понижено до 5 місць. ₴1,680/міс зекономлено.',
+    'aws-reserved':   'Задачу делеговано DevOps. Очікуйте підтвердження.',
+    'freeze-mkt':     'Маркетинг-бюджет заморожено до кінця Q2.',
+  };
+  showToast(msgs[id] || 'Виконано!', 'success');
+}
+
+async function _generateReminder(action) {
+  const btn = document.querySelector(`#action-row-${action.id} button`);
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+
+  const prompt = `Ти — CFO компанії. Напиши короткий, ввічливий але прямий email-нагадування клієнту Beta Solutions Ltd про прострочену оплату.
+
+Деталі:
+- Сума: ₴185,000 (MRR за травень 2026)
+- Прострочення: 45 днів  
+- Це 3-й цикл підряд
+- Попереднє нагадування: 20 днів тому
+
+Формат: Тема листа + тіло листа. Мова: українська. Тон: professional, без погроз, але чітко. Максимум 8 речень.`;
+
+  try {
+    const text = await callClaude('Ти фінансовий директор SaaS компанії.', [{ role:'user', content:prompt }], 400);
+    showEmailModal(text, 'Beta Solutions Ltd');
+  } catch (err) {
+    showToast('AI недоступний. Перевірте API ключ.', 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Надіслати'; }
+  }
+}
+
+function showEmailModal(text, recipient) {
+  let m = document.getElementById('emailModal');
+  if (!m) {
+    m = document.createElement('div');
+    m.id = 'emailModal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center;background:rgba(14,12,10,.4);backdrop-filter:blur(3px);padding:16px;';
+    document.body.appendChild(m);
+  }
+  m.innerHTML = `
+    <div style="background:var(--white);border-radius:16px;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.15);">
+      <div style="padding:20px 24px 16px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--ink);">AI Email-нагадування</div>
+          <div style="font-size:12px;color:var(--warm);margin-top:2px;">Кому: ${esc(recipient)}</div>
+        </div>
+        <button onclick="document.getElementById('emailModal').remove()" style="width:30px;height:30px;border-radius:6px;border:1.5px solid var(--border);background:transparent;font-size:16px;cursor:pointer;color:var(--warm);">×</button>
+      </div>
+      <div style="padding:20px 24px;">
+        <div id="emailBody" style="font-size:13px;line-height:1.7;color:var(--charcoal);white-space:pre-wrap;background:var(--cream2);border-radius:10px;padding:16px;border:1.5px solid var(--border);font-family:'DM Mono',monospace;">${esc(text)}</div>
+      </div>
+      <div style="padding:0 24px 20px;display:flex;gap:8px;">
+        <button onclick="navigator.clipboard?.writeText(document.getElementById('emailBody').textContent);showToast('Скопійовано','success')" class="btn btn-dark" style="flex:1;padding:11px;">Копіювати</button>
+        <button onclick="document.getElementById('emailModal').remove()" class="btn btn-out" style="flex:1;padding:11px;">Закрити</button>
+      </div>
+    </div>`;
+  m.addEventListener('click', e => { if (e.target === m) m.remove(); });
+}
+
+// ── Board Report Generator ─────────────────────────────
+async function generateBoardReport() {
+  const btn = document.getElementById('boardReportBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Генерую звіт…'; }
+
+  const prompt = `Ти — CFO, готуєш щомісячний Board Report для ради директорів та інвесторів.
+
+Дані компанії (травень 2026):
+• Дохід: ₴996K (+12.4% MoM, +18.6% YoY)
+• Витрати: ₴334K операційних (+18.2% MoM) 
+• Чистий прибуток: ₴662K (маржа 66.4%)
+• Баланс рахунку: ₴2.45M
+• Команда: 12 осіб
+• CFO Health Score: 74/100 (+4 за місяць)
+• MRR: ₴827K (83% від доходу, передбачуваний)
+
+Ключові ризики:
+• Beta Solutions прострочена оплата 45 днів (₴185K MRR під ризиком)
+• SaaS витрати на 37% вище ринку — марнотратство ₴21.9K/міс виявлено
+• Залежність: 22.1% доходу від 1 клієнта (Acme Corp)
+• Burn rate ростає +18.2% vs дохід +12.4%
+
+Позитивне:
+• Delta Finance +18% MoM (upsell можливість)
+• Runway стрес-тест: 77 днів без доходу
+• Fraud risk score: 91/100 (контрольовано)
+
+Напиши Board Report українською мовою. Структура:
+## Executive Summary
+## Ключові метрики (таблиця markdown)
+## Фінансові підсумки
+## Ризики та мітигація
+## Рекомендовані дії (пронумерований список)
+## Прогноз на наступний місяць
+
+Стиль: investor-grade, лаконічно, без води. Довжина: 400-600 слів.`;
+
+  try {
+    const md = await callClaude(
+      'Ти досвідчений CFO SaaS компанії. Пишеш чіткі, структуровані board reports.',
+      [{ role:'user', content:prompt }],
+      1200
+    );
+    showReportModal(md);
+  } catch (err) {
+    showToast('Помилка генерації. Перевірте API ключ.', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📄 Генерувати Board Report'; }
+  }
+}
+
+function _mdToHtml(md) {
+  return md
+    .replace(/^## (.+)$/gm, '<h3 style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--ink);margin:20px 0 8px;padding-bottom:6px;border-bottom:1.5px solid var(--border);">$1</h3>')
+    .replace(/^### (.+)$/gm, '<h4 style="font-size:13px;font-weight:700;color:var(--ink);margin:14px 0 6px;">$1</h4>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\|(.+)\|/g, (row) => {
+      const cells = row.split('|').filter(c => c.trim()).map(c => `<td style="padding:6px 12px;border:1px solid var(--border);font-size:12.5px;">${c.trim()}</td>`).join('');
+      return `<tr>${cells}</tr>`;
+    })
+    .replace(/(<tr>[\s\S]+?<\/tr>)/g, '<table style="width:100%;border-collapse:collapse;margin:10px 0;font-family:\'DM Mono\',monospace;font-size:12px;">$1</table>')
+    .replace(/^(\d+)\. (.+)$/gm, '<div style="display:flex;gap:10px;margin:4px 0;font-size:13px;"><span style="font-weight:700;color:var(--ink);flex-shrink:0;">$1.</span><span>$2</span></div>')
+    .replace(/^[•\-] (.+)$/gm, '<div style="display:flex;gap:8px;margin:3px 0;font-size:13px;"><span style="color:var(--warm);flex-shrink:0;">·</span><span>$1</span></div>')
+    .replace(/\n\n/g, '<br>')
+    .replace(/\n/g, '');
+}
+
+function showReportModal(md) {
+  let m = document.getElementById('boardReportModal');
+  if (!m) {
+    m = document.createElement('div');
+    m.id = 'boardReportModal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center;background:rgba(14,12,10,.4);backdrop-filter:blur(3px);padding:16px;';
+    document.body.appendChild(m);
+  }
+
+  const html = _mdToHtml(md);
+  const date = new Date().toLocaleDateString('uk-UA',{year:'numeric',month:'long',day:'numeric'});
+
+  m.innerHTML = `
+    <div style="background:var(--white);border-radius:16px;width:100%;max-width:680px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.15);">
+      <div style="padding:20px 24px 16px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+        <div>
+          <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--ink);">Board Report</div>
+          <div style="font-size:12px;color:var(--warm);margin-top:2px;">Згенеровано AI · ${date}</div>
+        </div>
+        <button onclick="document.getElementById('boardReportModal').remove()" style="width:30px;height:30px;border-radius:6px;border:1.5px solid var(--border);background:transparent;font-size:16px;cursor:pointer;color:var(--warm);">×</button>
+      </div>
+      <div id="reportContent" style="flex:1;overflow-y:auto;padding:24px;line-height:1.65;color:var(--charcoal);">${html}</div>
+      <div style="padding:16px 24px;border-top:1.5px solid var(--border);display:flex;gap:8px;flex-shrink:0;">
+        <button onclick="window.print()" class="btn btn-dark" style="flex:1;padding:11px;">🖨 Друкувати / PDF</button>
+        <button onclick="navigator.clipboard?.writeText(${JSON.stringify(md).replace(/'/g,"\\'")}||'');showToast('Скопійовано','success')" class="btn btn-out" style="flex:1;padding:11px;">Копіювати текст</button>
+        <button onclick="document.getElementById('boardReportModal').remove()" class="btn btn-out" style="padding:11px 16px;">✕</button>
+      </div>
+    </div>`;
+  m.addEventListener('click', e => { if (e.target === m) m.remove(); });
+}
+
+// ── Init Chunk 3 ─────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  renderAIActions();
+});
+document.addEventListener('click', e => {
+  const p = e.target.closest('.sb-item[data-page]')?.dataset?.page;
+  if (p === 'overview') setTimeout(renderAIActions, 50);
+});

@@ -170,6 +170,9 @@
         <div class="kpi" style="border-top-color:var(--blue);"><div class="kpi-l">Burn Rate</div><div class="kpi-v">₴11K/д</div><div class="kpi-d dn">+ 6.2%</div></div>
       </div>
 
+      <!-- AI Actions — рендериться JS -->
+      <div id="aiActionsCard"></div>
+
       <div class="g32" style="margin-bottom:14px;">
         <div class="card">
           <div class="card-hd"><div><div class="card-t">Дохід vs Витрати</div><div class="card-s">Останні 30 днів</div></div></div>
@@ -913,7 +916,12 @@
       </div>
     </div>
     <div class="page" id="pg-reports">
-      <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--ink);margin-bottom:16px;">Звіти</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+        <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--ink);">Звіти</div>
+        <button id="boardReportBtn" onclick="generateBoardReport()" style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:var(--ink);color:var(--cream);border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;">
+          📄 Генерувати Board Report
+        </button>
+      </div>
       <div class="g3">
         <div class="report-c" onclick="flash(this,'Завантажено')"><div class="report-icon">MS</div><div style="font-size:13px;font-weight:700;margin-bottom:4px;">Місячний підсумок</div><div style="font-size:12px;color:var(--warm);margin-bottom:12px;">Доходи, витрати, прибуток — травень 2026</div><span class="chip c-g">Готово</span></div>
         <div class="report-c" onclick="flash(this,'Завантажено')"><div class="report-icon">AI</div><div style="font-size:13px;font-weight:700;margin-bottom:4px;">AI Аудит звіт</div><div style="font-size:12px;color:var(--warm);margin-bottom:12px;">6 проблем · ₴14,280/міс економія</div><span class="chip c-r">6 проблем</span></div>
