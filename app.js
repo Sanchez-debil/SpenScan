@@ -14,6 +14,7 @@ const CFG = {
 // ══ STATE ══
 const state = {
   apiKey: '',
+  serverKey: false,
   chatHistory: [],
   selectedCountry: 'DE',
   selectedBank: null,
@@ -320,7 +321,33 @@ function saveApiKeyFromSettings() {
 }
 
 async function callClaude(system, messages, maxTokens = 800) {
-  if (!state.apiKey) throw new Error('Введіть API ключ у верхньому рядку щоб активувати AI');
+  // Пріоритет: ручний ключ користувача → серверний проксі
+  if (state.apiKey) {
+    return _claudeDirect(system, messages, maxTokens);
+  }
+  if (state.serverKey) {
+    return _claudeProxy(system, messages, maxTokens);
+  }
+  throw new Error('Введіть API ключ щоб активувати AI');
+}
+
+async function _claudeProxy(system, messages, maxTokens) {
+  const resp = await fetch('/api/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: CFG.CLAUDE_MODEL, max_tokens: maxTokens, system, messages }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    if (resp.status === 503) throw new Error('Серверний API ключ не налаштований — зверніться до адміністратора');
+    throw new Error(err?.error?.message || `HTTP ${resp.status}`);
+  }
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.content.map(b => b.text || '').join('');
+}
+
+async function _claudeDirect(system, messages, maxTokens) {
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -338,6 +365,22 @@ async function callClaude(system, messages, maxTokens = 800) {
   const data = await resp.json();
   if (data.error) throw new Error(data.error.message);
   return data.content.map(b => b.text || '').join('');
+}
+
+// Перевірити серверний ключ при завантаженні
+async function checkServerKey() {
+  try {
+    const r = await fetch('/api/claude');
+    if (r.ok) {
+      const d = await r.json();
+      if (d.available) {
+        state.serverKey = true;
+        $('apiBanner') && ($('apiBanner').style.display = 'none');
+        const s = $('apiStatus');
+        if (s) { s.textContent = 'AI активний (серверний ключ)'; s.style.color = '#6EE7A0'; }
+      }
+    }
+  } catch { /* localhost без проксі — показуємо банер */ }
 }
 
 // ══ AI AUDIT ══
@@ -861,6 +904,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initAIRecs();
   initListeners();
   setTimeout(initCharts, CFG.CHART_INIT_DELAY);
+  checkServerKey(); // приховати API банер якщо є серверний ключ
 });
 
 // ══════════════════════════════════════════════
