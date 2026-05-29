@@ -23,7 +23,7 @@
 
 <div class="app">
 
-<div class="overlay" id="overlay" onclick="closeSb()"></div>
+<div class="overlay" id="overlay"></div>
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
@@ -33,36 +33,36 @@
   </div>
   <nav class="sb-nav">
     <div class="sb-group">Огляд</div>
-    <div class="sb-item on" onclick="nav('overview',this)"><span class="sb-icon">#</span>Дашборд</div>
-    <div class="sb-item" onclick="nav('cashflow',this)"><span class="sb-icon">~</span>Кеш Флоу</div>
-    <div class="sb-item" onclick="nav('efficiency',this)"><span class="sb-icon">%</span>Ефективність</div>
+    <div class="sb-item on" data-page="overview"><span class="sb-icon">#</span>Дашборд</div>
+    <div class="sb-item" data-page="cashflow"><span class="sb-icon">~</span>Кеш Флоу</div>
+    <div class="sb-item" data-page="efficiency"><span class="sb-icon">%</span>Ефективність</div>
     <div class="sb-group">Фінанси</div>
-    <div class="sb-item" onclick="nav('transactions',this)"><span class="sb-icon">=</span>Транзакції</div>
-    <div class="sb-item" onclick="nav('expenses',this)"><span class="sb-icon">-</span>Витрати</div>
-    <div class="sb-item" onclick="nav('revenue',this)"><span class="sb-icon">+</span>Доходи</div>
-    <div class="sb-item" onclick="nav('budgets',this)"><span class="sb-icon">o</span>Бюджети</div>
+    <div class="sb-item" data-page="transactions"><span class="sb-icon">=</span>Транзакції</div>
+    <div class="sb-item" data-page="expenses"><span class="sb-icon">-</span>Витрати</div>
+    <div class="sb-item" data-page="revenue"><span class="sb-icon">+</span>Доходи</div>
+    <div class="sb-item" data-page="budgets"><span class="sb-icon">o</span>Бюджети</div>
     <div class="sb-group">AI</div>
-    <div class="sb-item" onclick="nav('audit',this)"><span class="sb-icon">*</span>AI Аудит<span class="sb-dot-badge">6</span></div>
-    <div class="sb-item" onclick="nav('assistant',this)"><span class="sb-icon">@</span>AI Асистент</div>
-    <div class="sb-item" onclick="nav('forecast',this)"><span class="sb-icon">^</span>Прогнозування</div>
-    <div class="sb-item" onclick="nav('fraud',this)"><span class="sb-icon">!</span>Виявлення шахрайства</div>
-    <div class="sb-item" onclick="nav('benchmark',this)"><span class="sb-icon">&lt;&gt;</span>Бенчмарк</div>
-    <div class="sb-item" onclick="nav('agents',this)"><span class="sb-icon">::</span>AI Агенти</div>
-    <div class="sb-item" onclick="nav('score',this)"><span class="sb-icon">88</span>AI Score</div>
-    <div class="sb-item" onclick="nav('notifications',this)"><span class="sb-icon">!</span>Сповіщення<span class="sb-dot-badge">4</span></div>
-    <div class="sb-item" onclick="nav('whatif',this)"><span class="sb-icon">?</span>What If</div>
-    <div class="sb-item" onclick="nav('investor',this)"><span class="sb-icon">IV</span>Investor Mode</div>
-    <div class="sb-item" onclick="nav('reports',this)"><span class="sb-icon">[]</span>Звіти</div>
+    <div class="sb-item" data-page="audit"><span class="sb-icon">*</span>AI Аудит<span class="sb-dot-badge">6</span></div>
+    <div class="sb-item" data-page="assistant"><span class="sb-icon">@</span>AI Асистент</div>
+    <div class="sb-item" data-page="forecast"><span class="sb-icon">^</span>Прогнозування</div>
+    <div class="sb-item" data-page="fraud"><span class="sb-icon">!</span>Виявлення шахрайства</div>
+    <div class="sb-item" data-page="benchmark"><span class="sb-icon">&lt;&gt;</span>Бенчмарк</div>
+    <div class="sb-item" data-page="agents"><span class="sb-icon">::</span>AI Агенти</div>
+    <div class="sb-item" data-page="score"><span class="sb-icon">88</span>AI Score</div>
+    <div class="sb-item" data-page="notifications"><span class="sb-icon">!</span>Сповіщення<span class="sb-dot-badge">4</span></div>
+    <div class="sb-item" data-page="whatif"><span class="sb-icon">?</span>What If</div>
+    <div class="sb-item" data-page="investor"><span class="sb-icon">IV</span>Investor Mode</div>
+    <div class="sb-item" data-page="reports"><span class="sb-icon">[]</span>Звіти</div>
     <div class="sb-group">Акаунт</div>
-    <div class="sb-item" onclick="nav('overview',this)"><span class="sb-icon">$</span>Підписка</div>
-    <div class="sb-item" onclick="nav('overview',this)"><span class="sb-icon">.</span>Налаштування</div>
+    <div class="sb-item" data-page="overview"><span class="sb-icon">$</span>Підписка</div>
+    <div class="sb-item" data-page="overview"><span class="sb-icon">.</span>Налаштування</div>
   </nav>
   <div class="sb-footer">
     <div class="sb-bank-card" id="sbBankCard">
       <div class="sb-bank-label">Підключений банк</div>
       <div class="sb-bank-row"><span class="sb-live-dot"></span><span class="sb-bank-name" id="sbBankName">Монобанк Бізнес</span></div>
       <div class="sb-bank-sync" id="sbBankSync">Синхр. 2 хв тому · 847 тр.</div>
-      <button onclick="openBankModal()" style="width:100%;margin-top:8px;padding:6px;border-radius:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;" onmouseover="this.style.background='rgba(255,255,255,.12)'" onmouseout="this.style.background='rgba(255,255,255,.08)'">+ Підключити банк</button>
+      <button onclick="openBankModal()" class="sb-add-bank-btn">+ Підключити банк</button>
     </div>
   </div>
 </aside>
@@ -71,7 +71,7 @@
 <div class="main">
   <div class="topbar">
     <div class="tb-left">
-      <button class="tb-menu" onclick="openSb()">&#9776;</button>
+      <button class="tb-menu" aria-label="Відкрити меню">&#9776;</button>
       <div>
         <div class="tb-title" id="tbTitle">Дашборд</div>
         <div class="tb-sub" id="tbSub">Травень 2026 · Монобанк Бізнес</div>
@@ -100,7 +100,7 @@
     <input type="password" id="apiKeyInput" placeholder="sk-ant-..." style="flex:1;min-width:200px;padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:var(--white);font-family:'DM Mono',monospace;font-size:12px;outline:none;">
     <button onclick="saveApiKey()" style="padding:6px 16px;border-radius:6px;background:var(--sand);color:var(--ink);border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;">Зберегти</button>
     <div id="apiStatus" style="font-size:11px;color:rgba(255,255,255,.3);font-family:'DM Mono',monospace;"></div>
-    <button onclick="document.getElementById('apiBanner').style.display='none'" style="margin-left:auto;background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:16px;flex-shrink:0;">×</button>
+    <button id="apiBannerClose" aria-label="Закрити" style="margin-left:auto;background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:16px;flex-shrink:0;">×</button>
   </div>
 
   <div class="content">
@@ -117,7 +117,7 @@
         </div>
         <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
           <div class="alert-amount">₴14,280</div>
-          <button class="btn" style="background:var(--sand);color:var(--ink);border:none;" onclick="nav('audit',document.querySelectorAll('.sb-item')[8])">Переглянути</button>
+          <button class="btn" style="background:var(--sand);color:var(--ink);border:none;" onclick="nav('audit')">Переглянути</button>
         </div>
       </div>
 
@@ -144,7 +144,7 @@
         <div class="card">
           <div class="card-hd">
             <div><div class="card-t">Останні транзакції</div><div class="card-s">5 операцій</div></div>
-            <span style="font-size:12px;color:var(--ink);cursor:pointer;font-weight:600;text-decoration:underline;text-underline-offset:3px;" onclick="nav('transactions',document.querySelectorAll('.sb-item')[3])">Всі</span>
+            <span style="font-size:12px;color:var(--ink);cursor:pointer;font-weight:600;text-decoration:underline;text-underline-offset:3px;" onclick="nav('transactions')">Всі</span>
           </div>
           <div class="card-body">
             <div class="tbl"><table><thead><tr><th>Операція</th><th>Дата</th><th>Сума</th><th>Статус</th></tr></thead><tbody id="ovTx"></tbody></table></div>
@@ -374,7 +374,7 @@
           <div id="chat-messages" style="flex:1;padding:14px 18px;display:flex;flex-direction:column;gap:10px;min-height:300px;max-height:380px;overflow-y:auto;overflow-x:hidden;"></div>
           <div style="padding:14px 18px;border-top:1px solid var(--cream3);">
             <div style="display:flex;gap:8px;">
-              <input type="text" id="chatInput" placeholder="Запитай щось..." style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;background:var(--cream2);color:var(--charcoal);" onkeydown="if(event.key==='Enter')sendChat()">
+              <input type="text" id="chatInput" placeholder="Запитай щось..." style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;background:var(--cream2);color:var(--charcoal);" autocomplete="off">
               <button class="btn btn-dark" onclick="sendChat()" style="padding:10px 18px;">Надіслати</button>
             </div>
             <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
@@ -718,7 +718,7 @@
             <div style="font-size:12.5px;color:var(--warm);margin-bottom:8px;">Фінансовий Score впав з 77 до 73 через зростання SaaS витрат та аномалію AWS. Рекомендуємо оптимізацію.</div>
             <div style="font-size:11px;color:var(--warm);font-family:'DM Mono',monospace;">Вчора · 09:00</div>
           </div>
-          <button onclick="nav('score',document.querySelectorAll('.sb-item')[13])" style="font-size:11px;padding:6px 14px;border-radius:7px;background:var(--cream2);color:var(--charcoal);border:1px solid var(--border2);cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;">Переглянути</button>
+          <button onclick="nav('score')" style="font-size:11px;padding:6px 14px;border-radius:7px;background:var(--cream2);color:var(--charcoal);border:1px solid var(--border2);cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;">Переглянути</button>
         </div>
 
         <div class="card" style="border-left:3px solid var(--green);display:flex;align-items:flex-start;gap:16px;opacity:.6;">
@@ -747,21 +747,21 @@
             <div style="margin-bottom:14px;">
               <div style="font-size:11px;font-weight:700;color:var(--warm);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'DM Mono',monospace;">Зміна витрат</div>
               <div style="display:flex;align-items:center;gap:10px;">
-                <input type="range" id="expChange" min="-50" max="50" value="0" style="flex:1;accent-color:var(--charcoal);" oninput="updateWhatIf()">
+                <input type="range" id="expChange" min="-50" max="50" value="0" style="flex:1;accent-color:var(--charcoal);" aria-label="Зміна витрат">
                 <span id="expVal" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;min-width:50px;">0%</span>
               </div>
             </div>
             <div style="margin-bottom:14px;">
               <div style="font-size:11px;font-weight:700;color:var(--warm);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'DM Mono',monospace;">Зміна доходу</div>
               <div style="display:flex;align-items:center;gap:10px;">
-                <input type="range" id="revChange" min="-30" max="50" value="0" style="flex:1;accent-color:var(--charcoal);" oninput="updateWhatIf()">
+                <input type="range" id="revChange" min="-30" max="50" value="0" style="flex:1;accent-color:var(--charcoal);" aria-label="Зміна доходу">
                 <span id="revVal" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;min-width:50px;">0%</span>
               </div>
             </div>
             <div style="margin-bottom:16px;">
               <div style="font-size:11px;font-weight:700;color:var(--warm);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'DM Mono',monospace;">Нові співробітники</div>
               <div style="display:flex;align-items:center;gap:10px;">
-                <input type="range" id="hireChange" min="0" max="10" value="0" style="flex:1;accent-color:var(--charcoal);" oninput="updateWhatIf()">
+                <input type="range" id="hireChange" min="0" max="10" value="0" style="flex:1;accent-color:var(--charcoal);" aria-label="Нові співробітники">
                 <span id="hireVal" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;min-width:50px;">0 осіб</span>
               </div>
             </div>
@@ -984,7 +984,7 @@
     <!-- STEP 2: Choose bank -->
     <div id="bankStep2" style="display:none;padding:0 24px 24px;">
       <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:6px;">Оберіть ваш банк</div>
-      <input type="text" id="bankSearch" placeholder="Пошук банку..." oninput="filterBanks()" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;background:var(--cream2);color:var(--charcoal);margin-bottom:12px;">
+      <input type="text" id="bankSearch" placeholder="Пошук банку..." autocomplete="off" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;background:var(--cream2);color:var(--charcoal);margin-bottom:12px;">
       <div id="bankList" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;margin-bottom:16px;"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
         <button onclick="goStep(1)" style="padding:11px;background:var(--cream2);color:var(--charcoal);border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">← Назад</button>

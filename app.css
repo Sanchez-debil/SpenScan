@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap');
+/* Fonts loaded via <link> in HTML — no duplicate @import needed */
 
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 :root{
@@ -242,3 +242,60 @@ select option{background:var(--white);}
   .g3{grid-template-columns:1fr;}
 }
 @media(max-width:480px){.kpis{grid-template-columns:1fr 1fr;}.kpi-v{font-size:18px;}.sel-row{grid-template-columns:1fr;}.alert{flex-direction:column;align-items:flex-start;}.alert-amount{font-size:18px;}.tb-right .btn-dark{font-size:11px;padding:6px 10px;}}
+
+/* ══ SIDEBAR BANK BUTTON ══ */
+.sb-add-bank-btn{width:100%;margin-top:8px;padding:6px;border-radius:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;}
+.sb-add-bank-btn:hover{background:rgba(255,255,255,.14);}
+
+/* ══ BANK MODAL STEPPER ══ */
+.bank-step-dot{
+  width:28px;height:28px;border-radius:50%;border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:var(--warm);flex-shrink:0;
+  font-family:'DM Mono',monospace;background:var(--white);transition:all .25s;
+}
+.bank-step-dot.active{border-color:var(--ink);background:var(--ink);color:var(--cream);}
+.bank-step-dot.done{border-color:var(--green);background:var(--green);color:#fff;}
+.bank-step-line{flex:1;height:2px;background:var(--border);transition:background .25s;}
+.bank-step-line.done{background:var(--green);}
+
+/* ══ BANK COUNTRY CARDS ══ */
+.bank-country-card{
+  border:1.5px solid var(--border);border-radius:10px;padding:14px 12px;
+  cursor:pointer;text-align:center;transition:all .15s;background:var(--white);
+}
+.bank-country-card:hover{border-color:var(--ink);}
+.bank-country-card.active{border-color:var(--ink);background:var(--cream2);}
+
+/* ══ BANK LIST ITEMS ══ */
+.bank-item{
+  display:flex;align-items:center;gap:12px;padding:10px 12px;
+  border:1.5px solid var(--border);border-radius:9px;cursor:pointer;
+  transition:all .15s;background:var(--white);
+}
+.bank-item:hover{border-color:var(--charcoal);}
+.bank-item.selected{border-color:var(--ink);background:var(--cream2);}
+.bank-logo{
+  width:36px;height:36px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:800;font-family:'DM Mono',monospace;flex-shrink:0;
+}
+.bank-item-name{font-size:13px;font-weight:600;color:var(--ink);}
+.bank-item-sub{font-size:10.5px;color:var(--warm);}
+.bank-item-check{margin-left:auto;font-size:13px;color:var(--green);font-weight:700;width:16px;text-align:center;}
+
+/* ══ FOCUS VISIBLE (keyboard nav) ══ */
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:4px;}
+button:focus-visible,a:focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
+
+/* ══ MOBILE: sidebar agents grid ══ */
+@media(max-width:680px){
+  [style*="grid-template-columns:repeat(5,1fr)"]{grid-template-columns:1fr 1fr !important;}
+  [style*="grid-template-columns:repeat(4,1fr)"]{grid-template-columns:1fr 1fr !important;}
+  .alert-amount{font-size:18px;}
+}
+
+/* ══ iOS safe area ══ */
+@supports(padding:max(0px)){
+  .content{padding-bottom:max(32px,env(safe-area-inset-bottom));}
+}
