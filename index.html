@@ -233,6 +233,7 @@
           </div>
         </div>
       </div>
+      <div id="cfPredictionPanel"></div>
     </div>
 
     <!-- EFFICIENCY -->
@@ -552,34 +553,7 @@
 
     <!-- BENCHMARK -->
     <div class="page" id="pg-benchmark">
-      <div class="kpis" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px;">
-        <div class="kpi" style="border-top-color:var(--red);"><div class="kpi-l">SaaS витрати</div><div class="kpi-v">+35%</div><div class="kpi-d dn">Вище за ринок</div></div>
-        <div class="kpi" style="border-top-color:var(--green);"><div class="kpi-l">Маркетинг</div><div class="kpi-v">-12%</div><div class="kpi-d up">Нижче за ринок</div></div>
-        <div class="kpi" style="border-top-color:var(--amber);"><div class="kpi-l">Burn Rate</div><div class="kpi-v">+18%</div><div class="kpi-d dn">Вище середнього</div></div>
-      </div>
-      <div class="g2" style="margin-bottom:14px;">
-        <div class="card">
-          <div class="card-hd"><div><div class="card-t">Порівняння з ринком</div><div class="card-s">IT компанії · 6-20 осіб · Україна</div></div></div>
-          <div class="card-body"><canvas id="benchChart" height="220"></canvas></div>
-        </div>
-        <div class="card">
-          <div class="card-hd"><div><div class="card-t">AI Висновки</div><div class="card-s">На основі 847 компаній</div></div></div>
-          <div class="card-body">
-            <div style="background:var(--red-bg);border:1px solid #F0C4C0;border-radius:9px;padding:12px 14px;margin-bottom:8px;border-left:3px solid var(--red);">
-              <div style="font-size:12.5px;font-weight:700;color:var(--red);margin-bottom:3px;">SaaS витрати завищені на 35%</div>
-              <div style="font-size:12px;color:var(--warm);">Компанії вашого розміру витрачають в середньому ₴68K/міс. У вас ₴93K.</div>
-            </div>
-            <div style="background:var(--amber-bg);border:1px solid #F0DDB8;border-radius:9px;padding:12px 14px;margin-bottom:8px;border-left:3px solid var(--amber);">
-              <div style="font-size:12.5px;font-weight:700;color:var(--amber);margin-bottom:3px;">Незвично велике перекриття інструментів</div>
-              <div style="font-size:12px;color:var(--warm);">У вас 3 інструменти що дублюють функції. Середнє по ринку — 1.</div>
-            </div>
-            <div style="background:var(--green-bg);border:1px solid #B8DFC5;border-radius:9px;padding:12px 14px;border-left:3px solid var(--green);">
-              <div style="font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:3px;">Маржа вища за ринок</div>
-              <div style="font-size:12px;color:var(--warm);">Ваша маржа 66.4% — середнє по ринку 58.2%. Добре!</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <div id="benchmarkPanel"></div>
     </div>
 
     <!-- AGENTS -->
@@ -845,75 +819,11 @@
         </div>
       </div>
 
-      <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:32px;margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
-          <div>
-            <div style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--ink);margin-bottom:4px;">Щомісячний звіт інвестору</div>
-            <div style="font-size:13px;color:var(--warm);">Травень 2026 · Конфіденційно</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">₴996K</div>
-            <div style="font-size:11px;color:var(--warm);">MRR · +12.4% MoM</div>
-          </div>
-        </div>
-
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
-          <div style="text-align:center;padding:14px;background:var(--cream2);border-radius:10px;border:1px solid var(--border);">
-            <div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">₴996K</div>
-            <div style="font-size:10px;color:var(--warm);text-transform:uppercase;letter-spacing:1px;margin-top:3px;">MRR</div>
-            <div style="font-size:11px;color:var(--green);font-weight:600;margin-top:3px;">+12.4% MoM</div>
-          </div>
-          <div style="text-align:center;padding:14px;background:var(--cream2);border-radius:10px;border:1px solid var(--border);">
-            <div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--ink);">66.4%</div>
-            <div style="font-size:10px;color:var(--warm);text-transform:uppercase;letter-spacing:1px;margin-top:3px;">Маржа</div>
-            <div style="font-size:11px;color:var(--green);font-weight:600;margin-top:3px;">+ринок 58.2%</div>
-          </div>
-          <div style="text-align:center;padding:14px;background:var(--cream2);border-radius:10px;border:1px solid var(--border);">
-            <div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--amber);">7.3</div>
-            <div style="font-size:10px;color:var(--warm);text-transform:uppercase;letter-spacing:1px;margin-top:3px;">Runway (міс)</div>
-            <div style="font-size:11px;color:var(--amber);font-weight:600;margin-top:3px;">Потребує уваги</div>
-          </div>
-          <div style="text-align:center;padding:14px;background:var(--cream2);border-radius:10px;border:1px solid var(--border);">
-            <div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--ink);">73</div>
-            <div style="font-size:10px;color:var(--warm);text-transform:uppercase;letter-spacing:1px;margin-top:3px;">AI Score</div>
-            <div style="font-size:11px;color:var(--green);font-weight:600;margin-top:3px;">Добре</div>
-          </div>
-        </div>
-
-        <div style="height:1px;background:var(--border);margin-bottom:20px;"></div>
-
-        <div style="font-size:14px;font-weight:700;margin-bottom:10px;">Ключові досягнення місяця</div>
-        <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:20px;">
-          <div style="display:flex;gap:8px;font-size:13px;color:var(--charcoal);"><span style="color:var(--green);font-weight:700;">+</span>Дохід зріс на 12.4% — рекорд за 6 місяців</div>
-          <div style="display:flex;gap:8px;font-size:13px;color:var(--charcoal);"><span style="color:var(--green);font-weight:700;">+</span>Маржа 66.4% — вища за середнє по ринку на 8.2%</div>
-          <div style="display:flex;gap:8px;font-size:13px;color:var(--charcoal);"><span style="color:var(--green);font-weight:700;">+</span>7 нових клієнтів, Avg Deal Size ₴142K</div>
-        </div>
-
-        <div style="font-size:14px;font-weight:700;margin-bottom:10px;">Виклики та план дій</div>
-        <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:20px;">
-          <div style="display:flex;gap:8px;font-size:13px;color:var(--charcoal);"><span style="color:var(--red);font-weight:700;">-</span>Витрати ростуть швидше за дохід (+18.2% vs +12.4%)</div>
-          <div style="display:flex;gap:8px;font-size:13px;color:var(--charcoal);"><span style="color:var(--amber);font-weight:700;">!</span>AI виявив ₴14,280/міс потенційної економії — виправляємо в червні</div>
-          <div style="display:flex;gap:8px;font-size:13px;color:var(--charcoal);"><span style="color:var(--amber);font-weight:700;">!</span>Runway 7.3 місяці — плануємо раунд фінансування Q3 2026</div>
-        </div>
-
-        <div style="height:1px;background:var(--border);margin-bottom:20px;"></div>
-
-        <div style="font-size:14px;font-weight:700;margin-bottom:10px;">Прогноз на наступний місяць</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
-          <div style="background:var(--green-bg);border-radius:9px;padding:12px;text-align:center;border:1px solid #B8DFC5;">
-            <div style="font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:var(--green);">₴1.1M</div>
-            <div style="font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-top:3px;">Прогноз MRR</div>
-          </div>
-          <div style="background:var(--amber-bg);border-radius:9px;padding:12px;text-align:center;border:1px solid #F0DDB8;">
-            <div style="font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:var(--amber);">₴340K</div>
-            <div style="font-size:10px;color:var(--amber);text-transform:uppercase;letter-spacing:1px;margin-top:3px;">Прогноз витрат</div>
-          </div>
-          <div style="background:var(--blue-bg);border-radius:9px;padding:12px;text-align:center;border:1px solid #BFD4F8;">
-            <div style="font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:var(--blue);">8.1 міс</div>
-            <div style="font-size:10px;color:var(--blue);text-transform:uppercase;letter-spacing:1px;margin-top:3px;">Runway (після опт.)</div>
-          </div>
-        </div>
+      <div style="display:flex;gap:6px;margin-bottom:16px;">
+        <button id="modeFounder" onclick="switchInvestorMode('founder')" style="padding:7px 16px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;border:1.5px solid var(--ink);background:var(--ink);color:var(--cream);transition:.15s;">Founder View</button>
+        <button id="modeInvestor" onclick="switchInvestorMode('investor')" style="padding:7px 16px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);background:transparent;color:var(--warm);transition:.15s;">Investor View</button>
       </div>
+      <div id="modeMetrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;"></div>
     </div>
     <div class="page" id="pg-reports">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">

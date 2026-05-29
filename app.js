@@ -2584,3 +2584,290 @@ document.addEventListener('click', e => {
   const p = e.target.closest('.sb-item[data-page]')?.dataset?.page;
   if (p === 'overview') setTimeout(renderAIActions, 50);
 });
+
+// ══════════════════════════════════════════════
+// CHUNK 4 — Benchmark + Founder/Investor + Cashflow Prediction
+// ══════════════════════════════════════════════
+
+// ── BENCHMARK ENGINE ─────────────────────────────────────
+
+const BENCHMARK = {
+  industry: 'SaaS · IT · 6–20 осіб · Україна/ЄС',
+  n: 847,
+  metrics: [
+    { label:'Gross Margin',          you:66.4, p50:58.2, p75:70.1, unit:'%',   up:true,  key:'margin' },
+    { label:'Revenue Growth (MoM)',  you:12.4, p50:8.5,  p75:15.8, unit:'%',   up:true,  key:'rev_growth' },
+    { label:'MRR / Total Revenue',   you:83.0, p50:71.0, p75:86.0, unit:'%',   up:true,  key:'mrr_pct' },
+    { label:'SaaS Spend / особу',    you:7792, p50:5800, p75:4200, unit:'₴',   up:false, key:'saas_pp' },
+    { label:'Burn Rate Growth',      you:18.2, p50:12.0, p75:7.5,  unit:'%',   up:false, key:'burn_growth' },
+    { label:'Payroll / Revenue',     you:15.1, p50:22.0, p75:14.0, unit:'%',   up:false, key:'payroll_ratio' },
+    { label:'CAC Payback',           you:4.2,  p50:6.1,  p75:3.0,  unit:'міс', up:false, key:'cac' },
+    { label:'NPS Score',             you:68,   p50:52,   p75:72,   unit:'',    up:true,  key:'nps' },
+    { label:'Revenue / Employee',    you:83000,p50:65000,p75:95000,unit:'₴',   up:true,  key:'rev_emp' },
+    { label:'Churn Rate (MoM)',      you:1.8,  p50:2.5,  p75:1.2,  unit:'%',   up:false, key:'churn' },
+  ],
+};
+
+function _benchPercentile(you, p50, p75, up) {
+  if (up) {
+    if (you >= p75) return { rank: 'top25', label: 'Топ 25%', col: 'green' };
+    if (you >= p50) return { rank: 'above', label: 'Вище медіани', col: 'green' };
+    return { rank: 'below', label: 'Нижче медіани', col: 'red' };
+  } else {
+    if (you <= p75) return { rank: 'top25', label: 'Топ 25%', col: 'green' };
+    if (you <= p50) return { rank: 'above', label: 'Вище медіани', col: 'green' };
+    return { rank: 'below', label: 'Нижче медіани', col: 'red' };
+  }
+}
+
+function _benchBar(you, p50, p75, up) {
+  // Position on a 0–max scale
+  const all = [you, p50, p75];
+  const max = Math.max(...all) * (up ? 1.3 : 1.3);
+  const pctYou = Math.min(100, Math.round(you / max * 100));
+  const pctP50 = Math.min(100, Math.round(p50 / max * 100));
+  const pctP75 = Math.min(100, Math.round(p75 / max * 100));
+  const { col } = _benchPercentile(you, p50, p75, up);
+  const barCol  = col === 'green' ? 'var(--green)' : 'var(--red)';
+  return `
+    <div style="position:relative;height:12px;background:var(--cream3);border-radius:6px;margin:6px 0 3px;">
+      <div style="position:absolute;left:0;top:0;height:100%;width:${pctYou}%;background:${barCol};border-radius:6px;transition:width .8s ease;"></div>
+      <div style="position:absolute;top:-2px;bottom:-2px;left:${pctP50}%;width:2px;background:var(--warm);border-radius:1px;" title="Медіана"></div>
+      <div style="position:absolute;top:-3px;bottom:-3px;left:${pctP75}%;width:2px;background:var(--ink);border-radius:1px;" title="Топ 25%"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--warm);">
+      <span>0</span>
+      <span>┆ Медіана</span>
+      <span>┆ Топ 25%</span>
+    </div>`;
+}
+
+function renderBenchmark() {
+  const el = document.getElementById('benchmarkPanel');
+  if (!el) return;
+
+  const bm = BENCHMARK;
+  const top25count = bm.metrics.filter(m => _benchPercentile(m.you, m.p50, m.p75, m.up).rank === 'top25').length;
+  const aboveCount = bm.metrics.filter(m => _benchPercentile(m.you, m.p50, m.p75, m.up).rank === 'above').length;
+  const belowCount = bm.metrics.filter(m => _benchPercentile(m.you, m.p50, m.p75, m.up).rank === 'below').length;
+
+  const fmtVal = (v, unit) => {
+    if (unit === '₴' && v >= 1000) return '₴' + (v/1000).toFixed(0) + 'K';
+    return v + unit;
+  };
+
+  const rows = bm.metrics.map(m => {
+    const pr = _benchPercentile(m.you, m.p50, m.p75, m.up);
+    const COL = { green: 'var(--green)', amber: 'var(--amber)', red: 'var(--red)' };
+    const BG  = { green: 'var(--green-bg)', red: 'var(--red-bg)' };
+    const vs  = m.up
+      ? (m.you >= m.p50 ? `+${(m.you - m.p50).toFixed(m.unit === '₴' ? 0 : 1)}${m.unit} vs медіана` : `${(m.you - m.p50).toFixed(1)}${m.unit} vs медіана`)
+      : (m.you <= m.p50 ? `-${(m.p50 - m.you).toFixed(m.unit === '₴' ? 0 : 1)}${m.unit} краще медіани` : `+${(m.you - m.p50).toFixed(1)}${m.unit} гірше медіани`);
+    return `
+      <div style="padding:14px 0;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:6px;">
+          <span style="font-size:13px;font-weight:700;color:var(--ink);">${esc(m.label)}</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:11.5px;color:var(--warm);">Ринок: ${fmtVal(m.p50, m.unit)}</span>
+            <span style="font-size:14px;font-weight:800;font-family:'DM Mono',monospace;color:${COL[pr.col]};">${fmtVal(m.you, m.unit)}</span>
+            <span style="font-size:9.5px;font-weight:800;padding:2px 8px;border-radius:20px;background:${BG[pr.col]||'var(--cream2)'};color:${COL[pr.col]};">${pr.label}</span>
+          </div>
+        </div>
+        ${_benchBar(m.you, m.p50, m.p75, m.up)}
+        <div style="font-size:11px;color:${COL[pr.col]};margin-top:4px;font-weight:600;">${esc(vs)}</div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
+      <div style="background:var(--green-bg);border:1px solid #B8DFC5;border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--green);margin-bottom:6px;">Топ 25%</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:32px;color:var(--green);">${top25count}</div>
+        <div style="font-size:11.5px;color:var(--green);margin-top:3px;">метрик — найкращі</div>
+      </div>
+      <div style="background:var(--cream);border:1.5px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warm);margin-bottom:6px;">Вище медіани</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:32px;color:var(--ink);">${aboveCount}</div>
+        <div style="font-size:11.5px;color:var(--warm);margin-top:3px;">метрик — середньо добре</div>
+      </div>
+      <div style="background:var(--red-bg);border:1px solid #F0C4C0;border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--red);margin-bottom:6px;">Нижче медіани</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:32px;color:var(--red);">${belowCount}</div>
+        <div style="font-size:11.5px;color:var(--red);margin-top:3px;">метрик — потребують уваги</div>
+      </div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--ink);">
+      <div class="card-hd"><div>
+        <div class="card-t">Benchmark vs ${esc(bm.industry)}</div>
+        <div class="card-s">Вибірка ${bm.n} компаній · Травень 2026 · ┆ = медіана, ┆ = Топ 25%</div>
+      </div></div>
+      <div style="padding:0 4px;">${rows}</div>
+    </div>`;
+}
+
+// ── FOUNDER / INVESTOR MODE TOGGLE ───────────────────────
+
+let _investorMode = 'investor'; // 'investor' | 'founder'
+
+const FOUNDER_VIEW = [
+  { label:'Runway (місяців)', value:'7.3', sub:'При нульовому доході — 77 днів', col:'amber', icon:'⏱' },
+  { label:'Щоденний Burn',   value:'₴11K', sub:'₴334K / 30 днів', col:'red',   icon:'🔥' },
+  { label:'Cash у банку',    value:'₴2.45M', sub:'Стабільно · +₴62K цього місяця', col:'green', icon:'🏦' },
+  { label:'Net Profit/міс',  value:'₴662K', sub:'Маржа 66.4%', col:'green', icon:'💰' },
+  { label:'Витрати завтра',  value:'₴93.5K', sub:'SaaS-цикл 1 черв.', col:'amber', icon:'📅' },
+  { label:'Efficiency Ratio',value:'1.48×', sub:'₴1 витрат → ₴1.48 доходу', col:'green', icon:'⚡' },
+];
+
+const INVESTOR_VIEW = [
+  { label:'MRR',            value:'₴827K', sub:'+12.4% MoM · +18.6% YoY', col:'green', icon:'📈' },
+  { label:'NRR',            value:'108%',  sub:'Net Revenue Retention', col:'green', icon:'🔄' },
+  { label:'Gross Margin',   value:'66.4%', sub:'Ринок: 58.2% — вище на 8.2%', col:'green', icon:'💎' },
+  { label:'Churn (MoM)',    value:'1.8%',  sub:'Ринок: 2.5% — краще', col:'green', icon:'📉' },
+  { label:'CAC Payback',    value:'4.2 міс', sub:'Ринок: 6.1 міс', col:'green', icon:'🎯' },
+  { label:'LTV/CAC',        value:'8.4×',  sub:'Відмінний показник', col:'green', icon:'🚀' },
+];
+
+function switchInvestorMode(mode) {
+  _investorMode = mode;
+  const btnF = document.getElementById('modeFounder');
+  const btnI = document.getElementById('modeInvestor');
+  const on  = 'background:var(--ink);color:var(--cream);border-color:var(--ink);';
+  const off = 'background:transparent;color:var(--warm);border-color:var(--border);';
+  if (btnF) btnF.style.cssText += mode === 'founder' ? on : off;
+  if (btnI) btnI.style.cssText += mode === 'investor' ? on : off;
+  renderInvestorContent();
+}
+
+function renderInvestorContent() {
+  const el = document.getElementById('modeMetrics');
+  if (!el) return;
+  const data = _investorMode === 'founder' ? FOUNDER_VIEW : INVESTOR_VIEW;
+  const COL = { green:'var(--green)', amber:'var(--amber)', red:'var(--red)', blue:'var(--blue)' };
+  el.innerHTML = data.map(m => `
+    <div style="background:var(--cream2);border:1.5px solid var(--border);border-radius:12px;padding:18px;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--ink)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="font-size:20px;margin-bottom:8px;">${m.icon}</div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warm);margin-bottom:4px;">${esc(m.label)}</div>
+      <div style="font-family:'DM Mono',monospace;font-size:22px;font-weight:700;color:${COL[m.col]||'var(--ink)'};">${esc(m.value)}</div>
+      <div style="font-size:11px;color:var(--warm);margin-top:4px;line-height:1.4;">${esc(m.sub)}</div>
+    </div>`).join('');
+}
+
+// ── AI CASHFLOW PREDICTION ────────────────────────────────
+
+const CF_PRED = {
+  months: [
+    {
+      label:'Червень 2026', short:'Черв',
+      inflow:1_024_000, outflow:352_000, balance_end:3_122_000,
+      confidence: 88,
+      events: [
+        { date:'1 черв', type:'payroll', text:'Виплата зарплат (12 осіб)',      amount:-150_000, certain:true  },
+        { date:'5 черв', type:'invoice', text:'Delta Finance — рахунок #1048',   amount:+128_000, prob:92       },
+        { date:'12 черв',type:'invoice', text:'Gamma Tech — рахунок #1049',      amount:+156_000, prob:85       },
+        { date:'15 черв',type:'tax',     text:'Квартальний ПДВ (Q2)',            amount:-48_000,  certain:true  },
+        { date:'20 черв',type:'saas',    text:'Цикл SaaS-підписок',             amount:-93_500,  certain:true  },
+        { date:'28 черв',type:'invoice', text:'Beta Solutions (затримка -45д)', amount:+185_000, prob:41       },
+      ],
+    },
+    {
+      label:'Липень 2026', short:'Лип',
+      inflow:1_068_000, outflow:361_000, balance_end:3_829_000,
+      confidence: 74,
+      events: [
+        { date:'1 лип', type:'payroll', text:'Виплата зарплат',                 amount:-150_000, certain:true  },
+        { date:'10 лип',type:'invoice', text:'Acme Corp — рахунок #1051',       amount:+220_000, prob:96       },
+        { date:'20 лип',type:'saas',    text:'Цикл SaaS-підписок',              amount:-93_500,  certain:true  },
+        { date:'25 лип',type:'tax',     text:'ЄСВ / ПДФО липень',              amount:-32_000,  certain:true  },
+      ],
+    },
+    {
+      label:'Серпень 2026', short:'Серп',
+      inflow:1_120_000, outflow:375_000, balance_end:4_574_000,
+      confidence: 61,
+      events: [
+        { date:'1 серп', type:'payroll', text:'Виплата зарплат',                amount:-150_000, certain:true  },
+        { date:'15 серп',type:'saas',    text:'Цикл SaaS-підписок',             amount:-93_500,  certain:true  },
+        { date:'20 серп',type:'invoice', text:'Прогнозні надходження',          amount:+1_000_000,prob:68      },
+      ],
+    },
+  ],
+};
+
+function renderCashflowPrediction() {
+  const el = document.getElementById('cfPredictionPanel');
+  if (!el) return;
+
+  const fmtK = v => v >= 0 ? '+₴' + (v/1000).toFixed(0) + 'K' : '−₴' + (Math.abs(v)/1000).toFixed(0) + 'K';
+  const TYPE_ICON = { payroll:'💼', invoice:'📄', tax:'🏛', saas:'💻' };
+  const TYPE_COL  = { payroll:'var(--amber)', invoice:'var(--green)', tax:'var(--red)', saas:'var(--blue)' };
+
+  const months = CF_PRED.months.map((m, mi) => {
+    const net = m.inflow - m.outflow;
+    const netCol = net >= 0 ? 'var(--green)' : 'var(--red)';
+    const confCol = m.confidence >= 80 ? 'var(--green)' : m.confidence >= 65 ? 'var(--amber)' : 'var(--red)';
+
+    const events = m.events.map(e => {
+      const eCol = e.amount > 0 ? 'var(--green)' : TYPE_COL[e.type] || 'var(--warm)';
+      const badge = e.certain
+        ? `<span style="font-size:9px;background:var(--cream2);color:var(--warm);padding:1px 6px;border-radius:20px;font-weight:700;">Точно</span>`
+        : `<span style="font-size:9px;background:${e.prob>=80?'rgba(42,110,70,.1)':'rgba(184,50,40,.1)'};color:${e.prob>=80?'var(--green)':'var(--red)'};padding:1px 6px;border-radius:20px;font-weight:700;">${e.prob}%</span>`;
+      return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:14px;flex-shrink:0;">${TYPE_ICON[e.type]||'·'}</span>
+        <div style="flex:1;min-width:0;">
+          <span style="font-size:12px;font-weight:600;color:var(--ink);">${esc(e.text)}</span>
+          <span style="font-size:11px;color:var(--warm);margin-left:6px;">${esc(e.date)}</span>
+        </div>
+        ${badge}
+        <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:${eCol};white-space:nowrap;">${fmtK(e.amount)}</span>
+      </div>`;
+    }).join('');
+
+    return `
+      <div class="card" style="border-top:3px solid ${mi===0?'var(--ink)':'var(--border)'};">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div style="font-size:15px;font-weight:700;color:var(--ink);">${esc(m.label)}</div>
+            <div style="font-size:11px;color:var(--warm);margin-top:2px;">Прогноз балансу на кінець місяця</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <div style="text-align:right;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--warm);">Net/міс</div>
+              <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${netCol};">${fmtK(net)}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--warm);">Баланс кінець</div>
+              <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:var(--ink);">₴${(m.balance_end/1_000_000).toFixed(2)}M</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--warm);">Точність прогнозу</div>
+              <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${confCol};">${m.confidence}%</div>
+            </div>
+          </div>
+        </div>
+        <div>${events}</div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="margin-top:14px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warm);margin-bottom:12px;">AI CASHFLOW PREDICTION — НАСТУПНІ 90 ДНІВ</div>
+      <div style="display:flex;flex-direction:column;gap:12px;">${months}</div>
+      <div style="margin-top:12px;padding:12px 14px;background:var(--cream);border-radius:9px;border-left:3px solid var(--blue);">
+        <span style="font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--blue);margin-right:8px;">МОДЕЛЬ</span>
+        <span style="font-size:12.5px;color:var(--charcoal);">Прогноз базується на MRR-базі, historical seasonality та ймовірності надходження invoice. Ймовірність Beta Solutions знижена через 45-денну затримку.</span>
+      </div>
+    </div>`;
+}
+
+// ── Init Chunk 4 ─────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  renderBenchmark();
+  renderInvestorContent();
+  renderCashflowPrediction();
+});
+document.addEventListener('click', e => {
+  const p = e.target.closest('.sb-item[data-page]')?.dataset?.page;
+  if (p === 'benchmark') setTimeout(renderBenchmark,           50);
+  if (p === 'investor')  setTimeout(renderInvestorContent,     50);
+  if (p === 'cashflow')  setTimeout(renderCashflowPrediction,  50);
+});
