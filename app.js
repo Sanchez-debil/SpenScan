@@ -1085,15 +1085,17 @@ async function submitAuth() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, email, password }),
     });
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.error || 'Помилка авторизації');
+    let d = {};
+    try { d = await r.json(); } catch { /* non-JSON response */ }
+    if (!r.ok) throw new Error(d.error || `Помилка сервера (${r.status}). Перевірте налаштування KV у Vercel.`);
 
     localStorage.setItem('spenscan_token', d.token);
     state.user = { email };
     hideAuthOverlay();
     showToast(`Ласкаво просимо, ${email}`, 'success');
   } catch (err) {
-    if (errEl) { errEl.textContent = err.message; errEl.style.display = 'block'; }
+    const msg = err.message || String(err);
+    if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = action === 'login' ? 'Увійти' : 'Створити акаунт'; }
   }
