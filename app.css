@@ -299,3 +299,190 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--ink);outline-offset
 @supports(padding:max(0px)){
   .content{padding-bottom:max(32px,env(safe-area-inset-bottom));}
 }
+/* ══════════════════════════════════════════
+   DRILL-DOWN PANEL SYSTEM
+══════════════════════════════════════════ */
+
+/* ── KPI card interactive states ── */
+.kpi-clickable{cursor:pointer;transition:transform .15s,box-shadow .15s;}
+.kpi-clickable:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,.09);}
+.kpi-clickable:active{transform:translateY(0);}
+.kpi-sparkline{line-height:0;margin-bottom:4px;opacity:.9;}
+.kpi-sparkline svg{display:block;}
+.kpi-drill-hint{
+  font-size:10px;font-weight:600;letter-spacing:.04em;
+  color:var(--warm);margin-top:6px;opacity:0;
+  transition:opacity .15s;user-select:none;
+}
+.kpi-clickable:hover .kpi-drill-hint{opacity:1;}
+
+/* ── Skeleton block ── */
+@keyframes sk-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.sk-block{
+  border-radius:6px;height:14px;
+  background:linear-gradient(90deg,var(--border) 25%,var(--cream2) 50%,var(--border) 75%);
+  background-size:200% 100%;
+  animation:sk-shimmer 1.4s infinite;
+}
+
+/* ── Drill panel overlay ── */
+.drill-panel{
+  position:fixed;inset:0;z-index:9000;
+  display:flex;align-items:stretch;justify-content:flex-end;
+  pointer-events:none;
+}
+.drill-panel.open{pointer-events:auto;}
+
+.drill-backdrop{
+  position:absolute;inset:0;
+  background:rgba(14,12,10,.35);
+  opacity:0;transition:opacity .28s ease;
+  backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+}
+.drill-panel.open .drill-backdrop{opacity:1;}
+
+.drill-sheet{
+  position:relative;z-index:1;
+  width:min(520px,100vw);
+  background:var(--white);
+  display:flex;flex-direction:column;
+  box-shadow:-8px 0 40px rgba(0,0,0,.12);
+  transform:translateX(100%);
+  transition:transform .3s cubic-bezier(.22,.68,0,1.08);
+  overflow:hidden;
+}
+.drill-panel.open .drill-sheet{transform:translateX(0);}
+
+/* ── Drill header ── */
+.drill-header{
+  display:flex;align-items:center;gap:8px;
+  padding:18px 20px 16px;
+  border-bottom:1.5px solid var(--border);
+  flex-shrink:0;
+}
+.drill-breadcrumbs{
+  display:flex;align-items:center;gap:4px;
+  flex:1;flex-wrap:wrap;min-width:0;
+}
+.dbc-item{
+  font-size:12px;font-weight:600;
+  color:var(--warm);cursor:pointer;
+  white-space:nowrap;padding:2px 4px;border-radius:4px;
+  transition:color .12s,background .12s;
+}
+.dbc-item:hover{color:var(--ink);background:var(--cream2);}
+.dbc-active{color:var(--ink) !important;cursor:default;}
+.dbc-active:hover{background:transparent;}
+.dbc-sep{font-size:11px;color:var(--warm);opacity:.5;user-select:none;}
+
+.drill-close{
+  width:30px;height:30px;border-radius:6px;
+  border:1.5px solid var(--border);background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;line-height:1;color:var(--warm);cursor:pointer;
+  transition:all .12s;flex-shrink:0;
+}
+.drill-close:hover{border-color:var(--ink);color:var(--ink);background:var(--cream2);}
+
+/* ── Drill body ── */
+.drill-body{
+  flex:1;overflow-y:auto;padding:20px;
+  display:flex;flex-direction:column;gap:16px;
+}
+
+/* ── Summary row ── */
+.drill-summary{
+  display:flex;gap:12px;
+  padding:16px;
+  background:var(--cream2);border-radius:12px;
+  flex-wrap:wrap;
+}
+.drill-sum-cell{display:flex;flex-direction:column;gap:3px;flex:1;min-width:80px;}
+.drill-sum-label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warm);}
+.drill-sum-value{font-size:18px;font-weight:700;color:var(--ink);font-family:'DM Serif Display',serif;line-height:1.1;}
+.drill-sum-change{
+  font-size:11px;font-weight:600;
+  padding:2px 6px;border-radius:20px;
+  width:fit-content;
+}
+.drill-sum-change.up{background:rgba(42,110,70,.1);color:var(--green);}
+.drill-sum-change.dn{background:rgba(184,50,40,.1);color:var(--red);}
+
+/* ── Insight tag ── */
+.drill-insight{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:12px 14px;background:var(--cream);
+  border-radius:10px;border-left:3px solid var(--amber);
+}
+.drill-insight-tag{
+  font-size:10px;font-weight:800;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--amber);
+  flex-shrink:0;padding-top:1px;
+}
+.drill-insight p{font-size:12px;line-height:1.55;color:var(--charcoal);margin:0;}
+
+/* ── Chart wrap ── */
+.drill-chart-wrap{
+  background:var(--cream);border-radius:12px;
+  padding:16px;
+}
+.drill-chart-label{
+  font-size:10px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--warm);margin-bottom:10px;
+}
+
+/* ── Section label ── */
+.drill-section-label{
+  font-size:10px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--warm);margin-bottom:2px;
+}
+
+/* ── Drill list items ── */
+.drill-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;border-radius:10px;
+  border:1.5px solid var(--border);background:var(--white);
+  transition:all .14s;
+}
+.drill-item-has-drill{cursor:pointer;}
+.drill-item-has-drill:hover{border-color:var(--charcoal);background:var(--cream2);}
+.drill-item-leaf{cursor:default;opacity:.9;}
+
+.drill-item-l{
+  width:36px;height:36px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;background:var(--cream2);
+}
+.drill-item-r{margin-left:auto;text-align:right;flex-shrink:0;}
+.drill-item-name{font-size:13px;font-weight:600;color:var(--ink);line-height:1.2;}
+.drill-item-meta{font-size:11px;color:var(--warm);margin-top:1px;}
+.drill-item-val{font-size:14px;font-weight:700;color:var(--ink);font-family:'DM Mono',monospace;}
+.drill-item-chg{font-size:11px;font-weight:600;margin-top:2px;}
+.drill-item-chg.up{color:var(--green);}
+.drill-item-chg.dn{color:var(--red);}
+.drill-arr{font-size:14px;color:var(--warm);flex-shrink:0;transition:transform .14s;}
+.drill-item-has-drill:hover .drill-arr{transform:translateX(3px);}
+
+/* ── Badge ── */
+.drill-badge{
+  font-size:9px;font-weight:800;letter-spacing:.04em;
+  text-transform:uppercase;padding:2px 7px;border-radius:20px;
+  background:var(--cream2);color:var(--warm);
+}
+
+/* ── Empty state ── */
+.drill-empty{
+  text-align:center;padding:48px 24px;
+  font-size:13px;color:var(--warm);
+}
+
+/* ── Period tabs: active = .on (handled by setPer in existing code) ── */
+
+/* ── Mobile ── */
+@media(max-width:600px){
+  .drill-sheet{width:100vw;border-radius:16px 16px 0 0;max-height:92dvh;}
+  .drill-panel{align-items:flex-end;}
+  .drill-panel.open .drill-sheet{transform:translateY(0);}
+  .drill-sheet{transform:translateY(100%);}
+  .drill-summary{flex-direction:column;}
+}

@@ -847,3 +847,634 @@ document.addEventListener('DOMContentLoaded', () => {
   initListeners();
   setTimeout(initCharts, CFG.CHART_INIT_DELAY);
 });
+
+// ══════════════════════════════════════════════
+// DRILL-DOWN SYSTEM + SPARKLINES + FILTER
+// ══════════════════════════════════════════════
+
+// ── Sparkline data (8 pts per KPI) ──
+const SPARKLINE_DATA = {
+  revenue:  [764,  820,  756,  910,  880, 1160,  884,  996],
+  expenses: [268,  292,  272,  340,  316,  452,  340,  334],
+  profit:   [496,  528,  484,  570,  564,  708,  544,  662],
+  balance:  [2100, 2180, 2050, 2240, 2300, 2520, 2440, 2450],
+  burn:     [8.9,  9.7,  9.1, 11.3, 10.5, 15.1, 11.3, 11.1],
+};
+
+// Positive = green line, negative = red line
+const SPARKLINE_POSITIVE = { revenue:true, expenses:false, profit:true, balance:true, burn:false };
+
+function mkSparklineSVG(data, w=80, h=28, positive=true) {
+  if (!data || data.length < 2) return '';
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const pad = 2;
+  const pts = data.map((v, i) => {
+    const x = pad + (i / (data.length - 1)) * (w - pad * 2);
+    const y = pad + (1 - (v - min) / range) * (h - pad * 2);
+    return [x, y];
+  });
+  const linePath = pts.map((p, i) => (i === 0 ? `M${p[0].toFixed(1)},${p[1].toFixed(1)}` : `L${p[0].toFixed(1)},${p[1].toFixed(1)}`)).join(' ');
+  const areaPath = linePath + ` L${pts[pts.length-1][0].toFixed(1)},${h} L${pts[0][0].toFixed(1)},${h} Z`;
+  const stroke = positive ? '#2A6E46' : '#B83228';
+  const fill   = positive ? 'rgba(42,110,70,.1)' : 'rgba(184,50,40,.1)';
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true" style="display:block;">
+    <path d="${areaPath}" fill="${fill}"/>
+    <path d="${linePath}" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+// ── Hierarchical drill-down data ──
+const DRILL_DATA = {
+  revenue: {
+    title:'Доходи', icon:'+', color:'#2A6E46',
+    root:{
+      summary:{ value:'₴996K', change:'+12.4%', positive:true },
+      insight:'Дохід стабільно зростає 3 місяці поспіль. Рекордний квітень (+31%) завдяки розширенню контракту Beta Solutions. Прогноз на червень — ₴1.1M.',
+      chart:[540,620,580,710,660,780,820,760,890,1160,884,996],
+      chartLabels:['чер','лип','сер','вер','жов','лис','гру','січ','лют','бер','кві','тра'],
+      items:[
+        {id:'jan',label:'Січень 2026',  value:760000, change:+8.2},
+        {id:'feb',label:'Лютий 2026',   value:890000, change:+17.1},
+        {id:'mar',label:'Березень 2026',value:1160000,change:+30.3},
+        {id:'apr',label:'Квітень 2026', value:884000, change:-23.8},
+        {id:'may',label:'Травень 2026', value:996000, change:+12.7},
+      ],
+    },
+    month:{
+      may:{
+        summary:{ value:'₴996K', change:'+12.7%', positive:true },
+        insight:'Три великі клієнти сплатили у травні. Тиждень 3 — рекордний завдяки Beta Solutions (₴216K).',
+        chart:[128,216,384,268],
+        chartLabels:['Тиж 1','Тиж 2','Тиж 3','Тиж 4'],
+        items:[
+          {id:'w1',label:'Тиждень 1 (1–7 тра)',  value:128000,change:+5.2},
+          {id:'w2',label:'Тиждень 2 (8–14 тра)', value:216000,change:+18.4},
+          {id:'w3',label:'Тиждень 3 (15–21 тра)',value:384000,change:+22.1},
+          {id:'w4',label:'Тиждень 4 (22–31 тра)',value:268000,change:+8.8},
+        ],
+      },
+      apr:{
+        summary:{ value:'₴884K', change:'-23.8%', positive:false },
+        insight:'Квітень нижче рекордного березня. Gamma LLC відстрочила платіж на травень.',
+        chart:[96,320,280,188],
+        chartLabels:['Тиж 1','Тиж 2','Тиж 3','Тиж 4'],
+        items:[
+          {id:'w1',label:'Тиждень 1 (1–7 кві)', value:96000, change:-8.3},
+          {id:'w2',label:'Тиждень 2 (8–14 кві)',value:320000,change:+15.2},
+          {id:'w3',label:'Тиждень 3 (15–21 кві)',value:280000,change:-4.1},
+          {id:'w4',label:'Тиждень 4 (22–30 кві)',value:188000,change:-9.6},
+        ],
+      },
+    },
+    week:{
+      w1:{ summary:{value:'₴128K',change:'+5.2%',positive:true}, insight:'Перший тиждень — Acme Corp сплатила рахунок #1042.',
+           chart:[0,0,128000,0,0,0,0], chartLabels:['Пн','Вт','Ср','Чт','Пт','Сб','Нд'],
+           items:[{id:'tx1',label:'Acme Corp — рахунок #1042',value:128000,change:0,date:'Ср, 3 тра',drillable:false}],},
+      w2:{ summary:{value:'₴216K',change:'+18.4%',positive:true}, insight:'Beta Solutions підтвердила оплату великого контракту.',
+           chart:[0,0,0,0,216000,0,0], chartLabels:['Пн','Вт','Ср','Чт','Пт','Сб','Нд'],
+           items:[{id:'tx2',label:'Beta Solutions Ltd',value:216000,change:0,date:'Пт, 12 тра',drillable:false}],},
+      w3:{ summary:{value:'₴384K',change:'+22.1%',positive:true}, insight:'Найкращий тиждень — два великих клієнти + передоплата.',
+           chart:[0,96000,0,192000,96000,0,0], chartLabels:['Пн','Вт','Ср','Чт','Пт','Сб','Нд'],
+           items:[
+             {id:'tx3',label:'Gamma LLC — рахунок #3012', value:96000, change:0,date:'Вт, 16 тра',drillable:false},
+             {id:'tx4',label:'Delta Corp — передоплата',  value:192000,change:0,date:'Чт, 18 тра',drillable:false},
+             {id:'tx5',label:'Sigma Tech — рахунок #4401',value:96000, change:0,date:'Пт, 19 тра',drillable:false},
+           ],},
+      w4:{ summary:{value:'₴268K',change:'+8.8%',positive:true}, insight:'Стабільний тиждень. Очікується ще один платіж від Delta Corp.',
+           chart:[0,128000,0,0,140000,0,0], chartLabels:['Пн','Вт','Ср','Чт','Пт','Сб','Нд'],
+           items:[
+             {id:'tx6',label:'Omega Partners — рахунок #2234',value:128000,change:0,date:'Вт, 23 тра',drillable:false},
+             {id:'tx7',label:'Kappa Corp — рахунок #1891',    value:140000,change:0,date:'Пт, 26 тра',drillable:false},
+           ],},
+    },
+  },
+
+  expenses: {
+    title:'Витрати', icon:'-', color:'#B83228',
+    root:{
+      summary:{ value:'₴334K', change:'+18.2%', positive:false },
+      insight:'Витрати ростуть швидше за дохід (+18.2% vs +12.4%). SaaS підписки перевищили бюджет на 17%. AI виявив ₴14,280/міс потенційної економії у 4 категоріях.',
+      chart:[248,268,244,292,272,316,328,304,348,452,340,334],
+      chartLabels:['чер','лип','сер','вер','жов','лис','гру','січ','лют','бер','кві','тра'],
+      items:[
+        {id:'saas',   label:'SaaS та підписки', value:93600, change:+32.0, flag:'warn'},
+        {id:'salary', label:'Зарплати',         value:140000,change:0},
+        {id:'mkt',    label:'Маркетинг',        value:48000, change:-8.0},
+        {id:'infra',  label:'Інфраструктура',   value:33600, change:+185.0, flag:'crit'},
+        {id:'office', label:'Офіс',             value:24800, change:+1.0},
+        {id:'travel', label:'Подорожі',         value:13600, change:-15.0},
+      ],
+    },
+    category:{
+      saas:{
+        summary:{value:'₴93,600',change:'+32%',positive:false},
+        insight:'SaaS витрати на 35% вище ринку. Zoom дублює Teams, Tableau 47 днів без входу. Потенційна економія ₴13,840/міс за рахунок 3 сервісів.',
+        chart:[52000,58000,62000,71000,74000,82000,89000,93600],
+        chartLabels:['жов','лис','гру','січ','лют','бер','кві','тра'],
+        items:[
+          {id:'slack',  label:'Slack Business+',   value:7500, change:+22.0,flag:'warn'},
+          {id:'figma',  label:'Figma Pro x8',      value:4480, change:0,    flag:'warn'},
+          {id:'zoom',   label:'Zoom Business',     value:3560, change:0,    flag:'crit'},
+          {id:'tableau',label:'Tableau',           value:5840, change:0,    flag:'crit'},
+          {id:'adobe',  label:'Adobe CC x15',      value:12800,change:+8.0},
+          {id:'gw',     label:'Google Workspace',  value:5760, change:0},
+          {id:'gh',     label:'GitHub Enterprise', value:8400, change:0},
+          {id:'other',  label:'Інші (16 сервісів)',value:45260,change:+5.0},
+        ],
+      },
+      infra:{
+        summary:{value:'₴33,600 / міс',change:'+185%',positive:false},
+        insight:'Аномальне зростання AWS витрат — +185% за 2 дні. Можливе неконтрольоване масштабування або витік конфігурації. Потребує негайної перевірки.',
+        chart:[11200,11200,12600,12600,14400,16800,16800,48000],
+        chartLabels:['Пн','Вт','Ср','Чт','Пт','Сб','Нд','Пн'],
+        items:[
+          {id:'aws',label:'AWS Cloud Services',value:48000,change:+185.0,flag:'crit'},
+          {id:'gcp',label:'Google Cloud',      value:4800, change:+12.0},
+          {id:'cf', label:'Cloudflare',        value:800,  change:0},
+        ],
+      },
+      mkt:{
+        summary:{value:'₴48,000',change:'-8%',positive:true},
+        insight:'Маркетинговий бюджет використано на 80%. Ефективність зросла: CPA знизився на 12%. Рекомендуємо збільшити бюджет на ₴10K.',
+        chart:[56000,54000,50000,52000,54000,52000,52000,48000],
+        chartLabels:['жов','лис','гру','січ','лют','бер','кві','тра'],
+        items:[
+          {id:'gads', label:'Google Ads',     value:16000,change:-12.0},
+          {id:'fbads',label:'Meta Ads',       value:12000,change:-5.0},
+          {id:'seo',  label:'SEO / контент',  value:8000, change:0},
+          {id:'email',label:'Email маркетинг',value:4000, change:+8.0},
+          {id:'pr',   label:'PR / медіа',     value:8000, change:+5.0},
+        ],
+      },
+      salary:{
+        summary:{value:'₴140,000',change:'0%',positive:true},
+        insight:'Зарплатний фонд стабільний. 12 співробітників. Revenue per employee ₴83K — нижче топ-перформерів у галузі (₴120K+).',
+        chart:[140000,140000,140000,140000,140000,140000,140000,140000],
+        chartLabels:['жов','лис','гру','січ','лют','бер','кві','тра'],
+        items:[
+          {id:'dev',   label:'Розробка (5 осіб)',value:65000,change:0},
+          {id:'sales', label:'Продажі (3 особи)', value:39000,change:0},
+          {id:'mkthr', label:'Маркетинг (2 особи)',value:24000,change:0},
+          {id:'ops',   label:'Операції (2 особи)', value:12000,change:0},
+        ],
+      },
+    },
+    merchant:{
+      slack:{
+        summary:{value:'₴7,500/міс',change:'+22%',positive:false},
+        insight:'Slack Business+ піднявся на 22% у березні без попередження. Renewal 3 червня — ₴45,600/рік. Рекомендуємо перейти на Microsoft Teams (вже оплачено) або Discord.',
+        chart:[6150,6150,6150,7500,7500,7500,7500,7500],
+        chartLabels:['жов','лис','гру','бер','кві-1','кві-2','тра-1','тра-2'],
+        items:[
+          {id:'slk1',label:'Slack Business+ — квітень',value:7500,change:+22.0,date:'1 кві 2026',drillable:false},
+          {id:'slk2',label:'Slack Business+ — березень',value:7500,change:+22.0,date:'1 бер 2026',drillable:false},
+          {id:'slk3',label:'Slack Business+ — лютий',value:6150,change:0,date:'1 лют 2026',drillable:false},
+        ],
+      },
+      zoom:{
+        summary:{value:'₴3,560/міс',change:'0%',positive:true},
+        insight:'Zoom Business дублює Microsoft Teams. Команда використовує Teams у 89% дзвінків. Скасування Zoom заощадить ₴42,720/рік.',
+        chart:[3560,3560,3560,3560,3560,3560,3560,3560],
+        chartLabels:['жов','лис','гру','січ','лют','бер','кві','тра'],
+        items:[
+          {id:'zm1',label:'Zoom Business — травень',value:3560,change:0,date:'1 тра 2026',drillable:false},
+          {id:'zm2',label:'Zoom Business — квітень',value:3560,change:0,date:'1 кві 2026',drillable:false},
+          {id:'zm3',label:'Zoom Business — березень',value:3560,change:0,date:'1 бер 2026',drillable:false},
+        ],
+      },
+      tableau:{
+        summary:{value:'₴5,840/міс',change:'0%',positive:false},
+        insight:'Tableau не використовувався 47 днів. Looker Studio (безкоштовно) покриває 95% потреб. Скасування заощадить ₴70,080/рік.',
+        chart:[5840,5840,5840,5840,5840,5840,5840,5840],
+        chartLabels:['жов','лис','гру','січ','лют','бер','кві','тра'],
+        items:[
+          {id:'tb1',label:'Tableau — травень',   value:5840,change:0,date:'1 тра 2026',drillable:false},
+          {id:'tb2',label:'Tableau — квітень',  value:5840,change:0,date:'1 кві 2026',drillable:false},
+          {id:'tb3',label:'Tableau — березень', value:5840,change:0,date:'1 бер 2026',drillable:false},
+        ],
+      },
+      aws:{
+        summary:{value:'₴48,000',change:'+185%',positive:false},
+        insight:'Аномальне зростання з ₴16,800 до ₴48,000 за 2 дні. Ймовірна причина: непотрібний авто-скейлінг або помилка конфігурації. Перевірте CloudWatch.',
+        chart:[16800,16800,16800,16800,16800,32000,48000,48000],
+        chartLabels:['Пн','Вт','Ср','Чт','28 кві','29 кві','1 тра','2 тра'],
+        items:[
+          {id:'aws1',label:'AWS — аномалія (1–2 тра)', value:48000,change:+185.0,date:'1–2 тра 2026',drillable:false,flag:'crit'},
+          {id:'aws2',label:'AWS — звичний платіж (кві)',value:16800,change:0,date:'28 кві 2026',drillable:false},
+        ],
+      },
+    },
+  },
+
+  cashflow: {
+    title:'Кеш Флоу', icon:'~', color:'#1C1A16',
+    root:{
+      summary:{value:'+₴662K',change:'+8.1%',positive:true},
+      insight:'Кеш позиція здорова. Runway 7.3 місяці. Якщо оптимізувати SaaS витрати (₴14,280/міс), runway зросте до 8.5 місяців. Плануйте раунд фінансування до Q4.',
+      chart:[300,352,336,418,388,464,492,456,542,708,544,662],
+      chartLabels:['чер','лип','сер','вер','жов','лис','гру','січ','лют','бер','кві','тра'],
+      items:[
+        {id:'jan',label:'Січень 2026',   value:300000,change:+12.5},
+        {id:'feb',label:'Лютий 2026',    value:622000,change:+107.3},
+        {id:'mar',label:'Березень 2026', value:812000,change:+30.6},
+        {id:'apr',label:'Квітень 2026',  value:544000,change:-33.0},
+        {id:'may',label:'Травень 2026',  value:662000,change:+21.7},
+      ],
+    },
+    month:{
+      may:{
+        summary:{value:'+₴662K',change:'+21.7%',positive:true},
+        insight:'Позитивний кеш флоу всі 4 тижні. Найкращий тиждень 3 (₴260K нетто) завдяки трьом великим надходженням.',
+        chart:[108,180,260,114],
+        chartLabels:['Тиж 1','Тиж 2','Тиж 3','Тиж 4'],
+        items:[
+          {id:'cfw1',label:'Тиждень 1 — нетто',value:108000,change:0},
+          {id:'cfw2',label:'Тиждень 2 — нетто',value:180000,change:0},
+          {id:'cfw3',label:'Тиждень 3 — нетто',value:260000,change:0},
+          {id:'cfw4',label:'Тиждень 4 — нетто',value:114000,change:0},
+        ],
+      },
+      apr:{
+        summary:{value:'+₴544K',change:'-33%',positive:false},
+        insight:'Квітень показав спад — AWS аномалія (+₴31,200 зайвих витрат) і відстрочка платежу від Gamma LLC.',
+        chart:[180,220,96,48],
+        chartLabels:['Тиж 1','Тиж 2','Тиж 3','Тиж 4'],
+        items:[
+          {id:'cfw1',label:'Тиждень 1 — нетто',value:180000,change:0},
+          {id:'cfw2',label:'Тиждень 2 — нетто',value:220000,change:0},
+          {id:'cfw3',label:'Тиждень 3 — нетто',value:96000, change:0},
+          {id:'cfw4',label:'Тиждень 4 — нетто',value:48000, change:0},
+        ],
+      },
+    },
+  },
+
+  profit: {
+    title:'Чистий прибуток', icon:'=', color:'#1C1A16',
+    root:{
+      summary:{value:'₴662K',change:'+8.1%',positive:true},
+      insight:'Маржа 66.4% — вища за ринок (58.2%). Але витрати ростуть швидше за дохід. Без оптимізації маржа знизиться до 61% за 6 місяців.',
+      chart:[300,352,336,418,388,464,492,456,542,812,544,662],
+      chartLabels:['чер','лип','сер','вер','жов','лис','гру','січ','лют','бер','кві','тра'],
+      items:[
+        {id:'jan',label:'Січень 2026',   value:492000,change:+5.2},
+        {id:'feb',label:'Лютий 2026',    value:588000,change:+19.5},
+        {id:'mar',label:'Березень 2026', value:768000,change:+30.6},
+        {id:'apr',label:'Квітень 2026',  value:532000,change:-30.7},
+        {id:'may',label:'Травень 2026',  value:662000,change:+24.4},
+      ],
+    },
+  },
+
+  balance: {
+    title:'Баланс рахунку', icon:'$', color:'#8C5808',
+    root:{
+      summary:{value:'₴2.45M',change:'Стабільно',positive:true},
+      insight:'Баланс стабільний. Runway 7.3 місяці при поточному burn rate ₴11K/день. Рекомендований мінімум — 3 місяці. Плануйте поповнення до кінця Q3.',
+      chart:[2100,2180,2050,2240,2300,2520,2440,2450],
+      chartLabels:['жов','лис','гру','січ','лют','бер','кві','тра'],
+      items:[
+        {id:'main',   label:'Основний рахунок (Монобанк)',value:1820000,change:0},
+        {id:'reserve',label:'Резервний рахунок',          value:450000, change:0},
+        {id:'payroll',label:'Рахунок зарплат',            value:140000, change:0},
+        {id:'tax',    label:'Податковий резерв',          value:40000,  change:0},
+      ],
+    },
+  },
+};
+
+// ── Drill-down Navigation Map ──
+// Defines what level to go to when clicking an item
+const DRILL_NAV = {
+  revenue: {
+    root:     { next:'month', labelKey:'label' },
+    month:    { next:'week',  labelKey:'label' },
+    week:     { next:null },
+  },
+  expenses: {
+    root:     { next:'category', labelKey:'label' },
+    category: { next:'merchant', labelKey:'label' },
+    merchant: { next:null },
+  },
+  cashflow: {
+    root:     { next:'month', labelKey:'label' },
+    month:    { next:null },
+  },
+  profit:  { root:{ next:null } },
+  balance: { root:{ next:null } },
+};
+
+// ── Drill State ──
+const drillState = {
+  stack: [], // [{type, level, id, label}]
+};
+
+function openDrill(type) {
+  const d = DRILL_DATA[type];
+  if (!d) return;
+  drillState.stack = [{ type, level:'root', id:null, label:d.title }];
+  _renderDrillPanel();
+  $('drillPanel')?.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrill() {
+  $('drillPanel')?.classList.remove('open');
+  document.body.style.overflow = '';
+  // Destroy drill chart to free memory
+  if (state.charts['drill']) { state.charts['drill'].destroy(); delete state.charts['drill']; }
+}
+
+function _drillInto(type, level, id, label) {
+  drillState.stack.push({ type, level, id, label });
+  _renderDrillPanel();
+}
+
+function _drillBackTo(index) {
+  drillState.stack = drillState.stack.slice(0, index + 1);
+  _renderDrillPanel();
+}
+
+function _renderDrillPanel() {
+  _renderBreadcrumbs();
+  _renderDrillBody();
+}
+
+function _renderBreadcrumbs() {
+  const el = $('drillBreadcrumbs');
+  if (!el) return;
+  el.innerHTML = '';
+  drillState.stack.forEach((item, i) => {
+    if (i > 0) {
+      const sep = document.createElement('span');
+      sep.className = 'dbc-sep'; sep.textContent = '›';
+      el.appendChild(sep);
+    }
+    const bc = document.createElement('span');
+    bc.className = 'dbc-item' + (i === drillState.stack.length - 1 ? ' dbc-active' : '');
+    bc.textContent = item.label;
+    if (i < drillState.stack.length - 1) {
+      bc.addEventListener('click', () => _drillBackTo(i));
+    }
+    el.appendChild(bc);
+  });
+}
+
+function _renderDrillBody() {
+  const body = $('drillBody');
+  if (!body) return;
+
+  // Show skeleton loading
+  body.innerHTML = `
+    <div class="sk-block" style="height:120px;margin-bottom:14px;"></div>
+    <div class="sk-block" style="height:70px;margin-bottom:12px;"></div>
+    <div class="sk-block" style="height:100px;margin-bottom:8px;"></div>
+    <div class="sk-block" style="height:48px;margin-bottom:4px;"></div>
+    <div class="sk-block" style="height:48px;margin-bottom:4px;"></div>
+    <div class="sk-block" style="height:48px;"></div>`;
+
+  setTimeout(() => {
+    const cur = drillState.stack[drillState.stack.length - 1];
+    if (!cur) return;
+    const { type, level, id } = cur;
+    const typeData = DRILL_DATA[type];
+    if (!typeData) return;
+
+    let levelData;
+    if (level === 'root') {
+      levelData = typeData.root;
+    } else if (typeData[level] && id && typeData[level][id]) {
+      levelData = typeData[level][id];
+    }
+
+    if (!levelData) {
+      body.innerHTML = '<div class="drill-empty">Немає даних для цього рівня</div>';
+      return;
+    }
+
+    body.innerHTML = _buildDrillHTML(type, level, levelData, typeData);
+
+    // Attach item click handlers
+    body.querySelectorAll('.drill-item[data-next]').forEach(itemEl => {
+      itemEl.addEventListener('click', () => {
+        _drillInto(
+          itemEl.dataset.type,
+          itemEl.dataset.next,
+          itemEl.dataset.id,
+          itemEl.dataset.label
+        );
+      });
+    });
+
+    // Render inline chart
+    const canvas = $('drillInlineChart');
+    if (canvas && levelData.chart) {
+      _renderDrillChart(levelData.chart, levelData.chartLabels, typeData.color);
+    }
+  }, 280);
+}
+
+function _buildDrillHTML(type, level, levelData, typeData) {
+  const { summary, insight, items, chart, chartLabels } = levelData;
+  const nav = DRILL_NAV[type]?.[level];
+  let html = '';
+
+  // Summary
+  if (summary) {
+    const cClass = summary.positive ? 'pos' : 'neg';
+    html += `<div class="drill-summary" style="background:${typeData.color};">
+      <div class="drill-sum-label">${esc(typeData.title)}</div>
+      <div class="drill-sum-value">${esc(summary.value)}</div>
+      ${summary.change ? `<div class="drill-sum-change ${cClass}">${esc(summary.change)} vs попередній</div>` : ''}
+    </div>`;
+  }
+
+  // Insight
+  if (insight) {
+    html += `<div class="drill-insight"><span class="drill-insight-tag">AI INSIGHTS</span>${esc(insight)}</div>`;
+  }
+
+  // Chart
+  if (chart) {
+    html += `<div class="drill-chart-wrap">
+      <div class="drill-chart-label">Динаміка</div>
+      <canvas id="drillInlineChart" height="72"></canvas>
+    </div>`;
+  }
+
+  // Items
+  if (items && items.length) {
+    html += `<div class="drill-section-label">Розбивка</div>`;
+    items.forEach(item => {
+      const canDrill = nav?.next && !item.drillable === false &&
+        (DRILL_DATA[type]?.[nav.next]?.[item.id] !== undefined || item.drillable !== false);
+      const hasNextData = nav?.next && DRILL_DATA[type]?.[nav.next]?.[item.id];
+      const drillable = hasNextData;
+      const val = item.value != null ? '₴' + item.value.toLocaleString('uk-UA') : '';
+      const changeStr = item.change ? (item.change > 0 ? `+${item.change.toFixed(1)}%` : `${item.change.toFixed(1)}%`) : '';
+      const isNeg = item.change < 0;
+      const changeIsGood = type === 'expenses' ? isNeg : !isNeg;
+      const changeCls = item.change === 0 ? 'nt' : (changeIsGood ? 'pos' : 'neg');
+      const flag = item.flag ? `<span class="drill-badge drill-badge-${item.flag}">${item.flag==='crit'?'Критично':'Увага'}</span> ` : '';
+
+      html += `<div class="drill-item${drillable?' drill-item-has-drill':' drill-item-leaf'}"
+        ${drillable ? `data-next="${esc(nav.next)}" data-type="${esc(type)}" data-id="${esc(item.id)}" data-label="${esc(item.label||item.name||'')}"` : ''}>
+        <div class="drill-item-l">
+          <div class="drill-item-name">${flag}${esc(item.label||item.name||'')}</div>
+          ${item.date ? `<div class="drill-item-meta">${esc(item.date)}</div>` : ''}
+        </div>
+        <div class="drill-item-r">
+          ${val ? `<div class="drill-item-val">${val}</div>` : ''}
+          ${changeStr ? `<div class="drill-item-chg ${changeCls}">${changeStr}</div>` : ''}
+        </div>
+        ${drillable ? '<span class="drill-arr">›</span>' : ''}
+      </div>`;
+    });
+  }
+
+  return html;
+}
+
+const colorHex = c => ({'var(--green)':'#2A6E46','var(--red)':'#B83228','var(--amber)':'#8C5808','var(--ink)':'#1C1A16'}[c] || c || '#1C1A16');
+
+function _renderDrillChart(data, labels, color) {
+  const canvas = $('drillInlineChart');
+  if (!canvas) return;
+  if (state.charts['drill']) { state.charts['drill'].destroy(); delete state.charts['drill']; }
+  const hex = colorHex(color);
+  state.charts['drill'] = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: labels || data.map((_,i) => String(i+1)),
+      datasets: [{
+        data,
+        backgroundColor: hex + '33',
+        borderColor: hex,
+        borderWidth: 2,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend:{ display:false } },
+      scales: {
+        x: { ticks:{ color:TC, font:{ size:9 } }, grid:{ display:false } },
+        y: { ticks:{ color:TC, font:{ size:9 }, callback: v => v >= 1000 ? '₴'+Math.round(v/1000)+'K' : v }, grid:{ color:GC } }
+      }
+    }
+  });
+}
+
+// ── Sparkline initializer ──
+function initSparklines() {
+  const map = [
+    { drill:'revenue',  positive:true  },
+    { drill:'expenses', positive:false },
+    { drill:'profit',   positive:true  },
+    { drill:'balance',  positive:true  },
+    { drill:'burn',     positive:false },
+  ];
+  const cards = document.querySelectorAll('#pg-overview .kpis > .kpi');
+  cards.forEach((card, i) => {
+    const m = map[i];
+    if (!m) return;
+    card.dataset.drill = m.drill;
+    card.classList.add('kpi-clickable');
+
+    const data = SPARKLINE_DATA[m.drill];
+    const kpiD = card.querySelector('.kpi-d');
+    if (kpiD && data) {
+      const wrap = document.createElement('div');
+      wrap.className = 'kpi-sparkline';
+      wrap.innerHTML = mkSparklineSVG(data, 80, 26, m.positive);
+      card.insertBefore(wrap, kpiD);
+    }
+    const hint = document.createElement('div');
+    hint.className = 'kpi-drill-hint';
+    hint.textContent = 'Деталі →';
+    card.appendChild(hint);
+
+    card.addEventListener('click', () => openDrill(m.drill));
+  });
+}
+
+// ── Period Filter ──
+const PERIOD_SCALES = {
+  '7Д':  { rev:0.232, exp:0.241, revChg:'+9.1%',  expChg:'+14.2%', profChg:'+6.3%' },
+  '30Д': { rev:1.000, exp:1.000, revChg:'+12.4%', expChg:'+18.2%', profChg:'+8.1%' },
+  '90Д': { rev:2.890, exp:2.920, revChg:'+24.1%', expChg:'+31.4%', profChg:'+18.4%' },
+  '1Р':  { rev:9.850, exp:9.200, revChg:'+18.6%', expChg:'+22.1%', profChg:'+15.2%' },
+};
+
+function applyPeriodFilter(periodLabel) {
+  const scale = PERIOD_SCALES[periodLabel] || PERIOD_SCALES['30Д'];
+  const rev = Math.round(996000 * scale.rev);
+  const exp = Math.round(334000 * scale.exp);
+  const prf = rev - exp;
+  const fmtK = v => v >= 1000000 ? '₴' + (v/1000000).toFixed(2)+'M' : '₴'+Math.round(v/1000)+'K';
+
+  const cards = document.querySelectorAll('#pg-overview .kpis > .kpi');
+  const fadeUpdate = (card, newVal, newChg, chgClass) => {
+    const vEl = card.querySelector('.kpi-v');
+    const dEl = card.querySelector('.kpi-d');
+    if (!vEl) return;
+    vEl.style.transition = 'opacity .18s';
+    vEl.style.opacity = '0';
+    if (dEl) { dEl.style.transition = 'opacity .18s'; dEl.style.opacity = '0'; }
+    setTimeout(() => {
+      vEl.textContent = newVal;
+      vEl.style.opacity = '1';
+      if (dEl && newChg) {
+        dEl.textContent = newChg;
+        dEl.className = 'kpi-d ' + chgClass;
+        dEl.style.opacity = '1';
+      }
+    }, 200);
+  };
+
+  if (cards[0]) fadeUpdate(cards[0], fmtK(rev), scale.revChg+' vs попередній', 'up');
+  if (cards[1]) fadeUpdate(cards[1], fmtK(exp), scale.expChg+' ростуть швидше', 'dn');
+  if (cards[2]) fadeUpdate(cards[2], fmtK(prf), scale.profChg, prf > 0 ? 'up' : 'dn');
+}
+
+// ── Init drill system ──
+function initDrillSystem() {
+  // Inject panel HTML if not present
+  if (!$('drillPanel')) {
+    const el = document.createElement('div');
+    el.id = 'drillPanel';
+    el.className = 'drill-panel';
+    el.setAttribute('role','dialog');
+    el.setAttribute('aria-modal','true');
+    el.innerHTML = `
+      <div id="drillBackdrop" class="drill-backdrop"></div>
+      <div class="drill-sheet">
+        <div class="drill-header">
+          <nav class="drill-breadcrumbs" id="drillBreadcrumbs" aria-label="Навігація"></nav>
+          <button class="drill-close" id="drillClose" aria-label="Закрити панель">×</button>
+        </div>
+        <div class="drill-body" id="drillBody"></div>
+      </div>`;
+    document.body.appendChild(el);
+  }
+
+  $('drillBackdrop')?.addEventListener('click', closeDrill);
+  $('drillClose')?.addEventListener('click', closeDrill);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && $('drillPanel')?.classList.contains('open')) closeDrill();
+  });
+
+  // Hook period tabs into filter system
+  document.querySelector('.period-tabs')?.addEventListener('click', e => {
+    const tab = e.target.closest('.ptab');
+    if (tab) applyPeriodFilter(tab.textContent.trim());
+  });
+}
+
+// Second DOMContentLoaded — safe to add multiple listeners
+document.addEventListener('DOMContentLoaded', () => {
+  initSparklines();
+  initDrillSystem();
+});
