@@ -1041,6 +1041,11 @@ function initListeners() {
 function showAuthOverlay() {
   const o = $('authOverlay');
   if (o) o.style.display = 'block';
+  switchAuthTab('login');
+  const emailEl = $('authEmail');
+  const pwdEl   = $('authPassword');
+  if (emailEl) emailEl.value = '';
+  if (pwdEl)   pwdEl.value   = '';
 }
 
 function hideAuthOverlay() {
@@ -1053,14 +1058,14 @@ function switchAuthTab(tab) {
   const loginBtn  = $('authTabLogin');
   const signupBtn = $('authTabSignup');
   const submitBtn = $('authSubmitBtn');
-  const active  = 'background:var(--white);font-weight:700;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.07);';
-  const passive = 'background:none;font-weight:600;color:var(--warm);box-shadow:none;';
-  if (loginBtn)  loginBtn.style.cssText  += isLogin  ? active : passive;
-  if (signupBtn) signupBtn.style.cssText += !isLogin ? active : passive;
+  const BASE = 'flex:1;padding:7px;border-radius:7px;border:none;font-size:13px;cursor:pointer;font-family:\'DM Sans\',sans-serif;transition:all .15s;';
+  if (loginBtn)  loginBtn.style.cssText  = BASE + (isLogin  ? 'background:var(--white);font-weight:700;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.07);' : 'background:none;font-weight:600;color:var(--warm);box-shadow:none;');
+  if (signupBtn) signupBtn.style.cssText = BASE + (!isLogin ? 'background:var(--white);font-weight:700;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.07);' : 'background:none;font-weight:600;color:var(--warm);box-shadow:none;');
   if (submitBtn) submitBtn.textContent = isLogin ? 'Увійти' : 'Створити акаунт';
   const pwdInput = $('authPassword');
   if (pwdInput) pwdInput.autocomplete = isLogin ? 'current-password' : 'new-password';
-  $('authError') && ($('authError').style.display = 'none');
+  const errEl = $('authError');
+  if (errEl) errEl.style.display = 'none';
   state._authTab = tab;
 }
 
