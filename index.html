@@ -908,12 +908,31 @@
     <!-- ══ ПІДПИСКА ══ -->
     <div class="page" id="pg-subscription">
       <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--ink);margin-bottom:6px;">Підписка</div>
-      <div style="font-size:13px;color:var(--warm);margin-bottom:24px;">Ваш поточний план та управління підпискою</div>
+      <div style="font-size:13px;color:var(--warm);margin-bottom:16px;">Ваш поточний план та управління підпискою</div>
+
+      <!-- Активна підписка — показується після оплати -->
+      <div id="subActiveInfo" style="display:none;align-items:center;gap:8px;font-size:12.5px;color:var(--charcoal);background:rgba(42,110,70,.07);border:1px solid #B8DFC5;border-radius:9px;padding:10px 14px;margin-bottom:20px;max-width:680px;"></div>
+
+      <!-- Billing toggle -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+        <span style="font-size:12.5px;font-weight:600;color:var(--ink);">Щомісяця</span>
+        <label style="position:relative;display:inline-block;width:40px;height:22px;cursor:pointer;">
+          <input type="checkbox" id="billingToggle" style="opacity:0;width:0;height:0;" onchange="toggleBilling(this.checked)">
+          <span style="position:absolute;inset:0;background:var(--border);border-radius:22px;transition:.2s;" id="billingTrack"></span>
+          <span style="position:absolute;left:3px;top:3px;width:16px;height:16px;background:var(--white);border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);" id="billingThumb"></span>
+        </label>
+        <span style="font-size:12.5px;font-weight:600;color:var(--ink);">Щорічно</span>
+        <span style="font-size:10px;font-weight:800;background:rgba(42,110,70,.1);color:var(--green);padding:2px 8px;border-radius:20px;">−25%</span>
+      </div>
+
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:680px;">
-        <div style="border:2px solid var(--border);border-radius:14px;padding:24px;background:var(--white);position:relative;">
+        <!-- Стартер -->
+        <div class="sub-plan-card" data-plan="starter" style="border:2px solid var(--border);border-radius:14px;padding:24px;background:var(--white);position:relative;transition:border-color .2s;">
           <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warm);margin-bottom:8px;">Стартер</div>
-          <div style="font-family:'DM Serif Display',serif;font-size:32px;color:var(--ink);margin-bottom:4px;">€15<span style="font-size:14px;font-weight:400;color:var(--warm);font-family:'DM Sans',sans-serif;">/міс</span></div>
-          <div style="font-size:12px;color:var(--warm);margin-bottom:20px;">або €144/рік (−20%)</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:32px;color:var(--ink);margin-bottom:2px;">
+            <span id="priceStarter">€15</span><span style="font-size:14px;font-weight:400;color:var(--warm);font-family:'DM Sans',sans-serif;">/міс</span>
+          </div>
+          <div style="font-size:11.5px;color:var(--warm);margin-bottom:20px;" id="pricingNoteStarter">або €144/рік (−20%)</div>
           <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
             <div style="font-size:12.5px;color:var(--charcoal);display:flex;gap:8px;align-items:center;"><span style="color:var(--green);font-weight:700;">✓</span>1 банківський рахунок</div>
             <div style="font-size:12.5px;color:var(--charcoal);display:flex;gap:8px;align-items:center;"><span style="color:var(--green);font-weight:700;">✓</span>AI Аудит та Асистент</div>
@@ -922,13 +941,17 @@
             <div style="font-size:12.5px;color:var(--warm);display:flex;gap:8px;align-items:center;"><span style="color:var(--border);font-weight:700;">✗</span>Кілька рахунків</div>
             <div style="font-size:12.5px;color:var(--warm);display:flex;gap:8px;align-items:center;"><span style="color:var(--border);font-weight:700;">✗</span>Investor Mode</div>
           </div>
-          <button onclick="flash(this,'Скоро…')" class="btn btn-out" style="width:100%;padding:11px;">Поточний план</button>
+          <button data-checkout="starter-monthly" data-label="Підписатись" onclick="startCheckout(this.dataset.checkout)" class="btn btn-out" style="width:100%;padding:11px;">Підписатись</button>
         </div>
-        <div style="border:2px solid var(--ink);border-radius:14px;padding:24px;background:var(--ink);position:relative;">
-          <div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--amber);color:var(--ink);font-size:10px;font-weight:800;letter-spacing:.05em;padding:3px 12px;border-radius:20px;">РЕКОМЕНДОВАНО</div>
+
+        <!-- Про -->
+        <div class="sub-plan-card" data-plan="pro" style="border:2px solid var(--ink);border-radius:14px;padding:24px;background:var(--ink);position:relative;transition:border-color .2s;">
+          <div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--amber);color:var(--ink);font-size:10px;font-weight:800;letter-spacing:.05em;padding:3px 12px;border-radius:20px;white-space:nowrap;">РЕКОМЕНДОВАНО</div>
           <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:8px;">Про</div>
-          <div style="font-family:'DM Serif Display',serif;font-size:32px;color:var(--cream);margin-bottom:4px;">€36<span style="font-size:14px;font-weight:400;color:rgba(255,255,255,.5);font-family:'DM Sans',sans-serif;">/міс</span></div>
-          <div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:20px;">або €288/рік (−33%)</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:32px;color:var(--cream);margin-bottom:2px;">
+            <span id="pricePro">€36</span><span style="font-size:14px;font-weight:400;color:rgba(255,255,255,.5);font-family:'DM Sans',sans-serif;">/міс</span>
+          </div>
+          <div style="font-size:11.5px;color:rgba(255,255,255,.4);margin-bottom:20px;" id="pricingNotePro">або €288/рік (−33%)</div>
           <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
             <div style="font-size:12.5px;color:var(--cream);display:flex;gap:8px;align-items:center;"><span style="color:var(--green);font-weight:700;">✓</span>До 5 банківських рахунків</div>
             <div style="font-size:12.5px;color:var(--cream);display:flex;gap:8px;align-items:center;"><span style="color:var(--green);font-weight:700;">✓</span>Все з плану Стартер</div>
@@ -937,9 +960,10 @@
             <div style="font-size:12.5px;color:var(--cream);display:flex;gap:8px;align-items:center;"><span style="color:var(--green);font-weight:700;">✓</span>Пріоритетна підтримка</div>
             <div style="font-size:12.5px;color:var(--cream);display:flex;gap:8px;align-items:center;"><span style="color:var(--green);font-weight:700;">✓</span>White-label звіти</div>
           </div>
-          <button onclick="flash(this,'Скоро…')" style="width:100%;padding:11px;background:var(--cream);color:var(--ink);border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Оновити →</button>
+          <button data-checkout="pro-monthly" data-label="Оновити →" onclick="startCheckout(this.dataset.checkout)" style="width:100%;padding:11px;background:var(--cream);color:var(--ink);border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">Оновити →</button>
         </div>
       </div>
+      <div style="font-size:11px;color:var(--warm);margin-top:12px;max-width:680px;">Безпечна оплата через Stripe · Скасування в будь-який момент · Без прихованих комісій</div>
     </div>
 
     <!-- ══ НАЛАШТУВАННЯ ══ -->

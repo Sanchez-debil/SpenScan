@@ -15,6 +15,7 @@ const CFG = {
 const state = {
   apiKey: '',
   serverKey: false,
+  sub: null, // { active, plan, email, customerId, periodEnd } — з localStorage
   chatHistory: [],
   selectedCountry: 'DE',
   selectedBank: null,
@@ -381,6 +382,140 @@ async function checkServerKey() {
       }
     }
   } catch { /* localhost без проксі — показуємо банер */ }
+}
+
+// ══ STRIPE / SUBSCRIPTION ══
+
+function loadSub() {
+  try { state.sub = JSON.parse(localStorage.getItem('spenscan_sub') || 'null'); } catch { state.sub = null; }
+}
+
+function saveSub(data) {
+  state.sub = data;
+  localStorage.setItem('spenscan_sub', JSON.stringify(data));
+}
+
+function subPlan() {
+  return state.sub?.active ? (state.sub.plan || 'starter') : null;
+}
+
+async function startCheckout(plan) {
+  const btn = document.querySelector(`[data-checkout="${plan}"]`);
+  if (btn) { btn.disabled = true; btn.textContent = 'Завантаження…'; }
+  try {
+    const r = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan }),
+    });
+    const d = await r.json();
+    if (!r.ok || !d.url) throw new Error(d.error || 'Помилка Stripe');
+    window.location.href = d.url; // перехід на Stripe Checkout
+  } catch (err) {
+    showToast(err.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = btn.dataset.label || 'Підписатись'; }
+  }
+}
+
+async function handleCheckoutReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const status    = params.get('checkout');
+  const sessionId = params.get('session_id');
+
+  // Очистити URL без перезавантаження
+  window.history.replaceState({}, '', window.location.pathname);
+
+  if (status === 'cancel') {
+    showToast('Оплату скасовано', 'info');
+    return;
+  }
+
+  if (status === 'success' && sessionId) {
+    showToast('Перевіряємо оплату…', 'info');
+    try {
+      const r = await fetch(`/api/verify?session_id=${encodeURIComponent(sessionId)}`);
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Помилка перевірки');
+      if (d.active) {
+        saveSub(d);
+        renderSubPage();
+        showToast(`Підписка ${d.plan === 'pro' ? 'Про' : 'Стартер'} активована! Дякуємо 🎉`, 'success');
+        nav('subscription');
+      } else {
+        showToast('Оплата не підтверджена — спробуйте ще раз', 'error');
+      }
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+}
+
+function toggleBilling(yearly) {
+  // Оновити ціни та data-checkout атрибути
+  const track = $('billingTrack');
+  const thumb = $('billingThumb');
+  if (track) track.style.background = yearly ? 'var(--ink)' : 'var(--border)';
+  if (thumb) thumb.style.transform   = yearly ? 'translateX(18px)' : '';
+
+  const sPrice = $('priceStarter');
+  const pPrice = $('pricePro');
+  const sNote  = $('pricingNoteStarter');
+  const pNote  = $('pricingNotePro');
+  const sBtn   = document.querySelector('[data-checkout^="starter"]');
+  const pBtn   = document.querySelector('[data-checkout^="pro"]');
+
+  if (yearly) {
+    if (sPrice) sPrice.textContent = '€12';
+    if (pPrice) pPrice.textContent = '€27';
+    if (sNote)  sNote.textContent  = '€144/рік — 2 місяці безкоштовно';
+    if (pNote)  pNote.textContent  = '€324/рік — 3 місяці безкоштовно';
+    if (sBtn)   sBtn.dataset.checkout = 'starter-yearly';
+    if (pBtn)   pBtn.dataset.checkout = 'pro-yearly';
+  } else {
+    if (sPrice) sPrice.textContent = '€15';
+    if (pPrice) pPrice.textContent = '€36';
+    if (sNote)  sNote.textContent  = 'або €144/рік (−20%)';
+    if (pNote)  pNote.textContent  = 'або €288/рік (−33%)';
+    if (sBtn)   sBtn.dataset.checkout = 'starter-monthly';
+    if (pBtn)   pBtn.dataset.checkout = 'pro-monthly';
+  }
+}
+
+function renderSubPage() {
+  const plan = subPlan();
+  const pg = $('pg-subscription');
+  if (!pg) return;
+
+  const starterBtn = pg.querySelector('[data-checkout="starter-monthly"]');
+  const proBtn     = pg.querySelector('[data-checkout="pro-monthly"]');
+  const yearlyToggle = pg.querySelector('#billingToggle');
+
+  if (!plan) return; // не підписаний — кнопки залишаються активними
+
+  // Підсвітити активний план
+  pg.querySelectorAll('.sub-plan-card').forEach(c => c.removeAttribute('data-active'));
+  const activeCard = pg.querySelector(`[data-plan="${plan}"]`);
+  if (activeCard) activeCard.setAttribute('data-active', '1');
+
+  // Кнопки
+  if (starterBtn) {
+    if (plan === 'starter') { starterBtn.textContent = '✓ Ваш план'; starterBtn.disabled = true; }
+    else { starterBtn.textContent = 'Понизити'; starterBtn.disabled = false; }
+  }
+  if (proBtn) {
+    if (plan === 'pro') { proBtn.textContent = '✓ Ваш план'; proBtn.disabled = true; }
+    else { proBtn.textContent = 'Оновити →'; proBtn.disabled = false; }
+  }
+
+  // Показати email і дату закінчення
+  const infoEl = $('subActiveInfo');
+  if (infoEl && state.sub) {
+    const endDate = state.sub.periodEnd
+      ? new Date(state.sub.periodEnd * 1000).toLocaleDateString('uk-UA')
+      : '—';
+    infoEl.innerHTML = `<span style="color:var(--green);font-weight:600;">● Активна</span> · ${esc(state.sub.email || '')} · наступне списання ${endDate}`;
+    infoEl.style.display = 'flex';
+  }
 }
 
 // ══ AI AUDIT ══
@@ -904,7 +1039,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initAIRecs();
   initListeners();
   setTimeout(initCharts, CFG.CHART_INIT_DELAY);
-  checkServerKey(); // приховати API банер якщо є серверний ключ
+  checkServerKey();
+  loadSub();
+  handleCheckoutReturn();
+  renderSubPage();
 });
 
 // ══════════════════════════════════════════════

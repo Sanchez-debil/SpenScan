@@ -1,5 +1,4 @@
-export default async function handler(req, res) {
-  // CORS — тільки свій домен
+module.exports = async function handler(req, res) {
   const allowed = process.env.ALLOWED_ORIGIN || '';
   const origin  = req.headers.origin || '';
   if (allowed && origin && origin !== allowed) {
@@ -11,19 +10,14 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(204).end();
 
-  // GET /api/claude — перевірити чи є ключ на сервері
   if (req.method === 'GET') {
     return res.status(200).json({ available: !!process.env.ANTHROPIC_API_KEY });
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return res.status(503).json({ error: 'Server API key not configured' });
-  }
+  if (!apiKey) return res.status(503).json({ error: 'Server API key not configured' });
 
   try {
     const upstream = await fetch('https://api.anthropic.com/v1/messages', {
@@ -35,10 +29,9 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify(req.body),
     });
-
     const data = await upstream.json();
     return res.status(upstream.status).json(data);
   } catch (err) {
     return res.status(502).json({ error: err.message });
   }
-}
+};
