@@ -1766,3 +1766,284 @@ document.addEventListener('DOMContentLoaded', () => {
   initSparklines();
   initDrillSystem();
 });
+
+// ══════════════════════════════════════════════
+// FINANCIAL BRAIN — CFO Score + Smart Runway
+// ══════════════════════════════════════════════
+
+const CFO_SCORE = {
+  total: 74, prev: 70,
+  label: 'Добре',
+  sublabel: 'Є зони для покращення. Потенціал зростання до 91/100',
+
+  dimensions: [
+    { id:'cash',   label:'Cash Health',            score:78, color:'green', w:.18,
+      insight:'7.3 міс. runway при поточному burn. Норма ≥12 міс.',       trend:'+3' },
+    { id:'burn',   label:'Burn Stability',          score:62, color:'amber', w:.15,
+      insight:'Витрати ростуть +18.2%, дохід лише +12.4% — розрив 5.8%', trend:'-5' },
+    { id:'mrr',    label:'Revenue Predictability',  score:84, color:'green', w:.18,
+      insight:'83% загального доходу — MRR. Стабільна передбачувана база', trend:'+2' },
+    { id:'saas',   label:'SaaS Efficiency',         score:54, color:'red',   w:.10,
+      insight:'₴14,280/міс марнотратство виявлено — 6 невикористаних ліцензій', trend:'-8' },
+    { id:'fraud',  label:'Fraud Risk',              score:91, color:'green', w:.10,
+      insight:'2 аномалії за 30 днів — низький ризик, контрольовано',     trend:'+1' },
+    { id:'dep',    label:'Revenue Dependency',      score:67, color:'amber', w:.14,
+      insight:'22% revenue від Acme Corp — висока концентрація на 1 клієнта', trend:'0' },
+    { id:'growth', label:'Growth Momentum',         score:79, color:'green', w:.15,
+      insight:'+12.4% MoM, NRR 108%. Позитивна траєкторія',               trend:'+4' },
+  ],
+
+  actions: [
+    { text:'Скасувати Zoom (дублює Teams)',                  impact:'+4', diff:'easy',   saving:'₴3,560/міс' },
+    { text:'Знизити Figma до 5 місць (8→5 seats)',          impact:'+3', diff:'easy',   saving:'₴1,680/міс' },
+    { text:'Tableau → Looker Studio (безкоштовно)',          impact:'+5', diff:'easy',   saving:'₴5,840/міс' },
+    { text:'AWS Reserved Instances замість On-Demand',       impact:'+6', diff:'medium', saving:'₴6,720/міс' },
+    { text:'Переглянути бюджет маркетингу (ROI нижчий норми)',impact:'+3', diff:'medium', saving:'₴8,000/міс' },
+  ],
+
+  alerts: [
+    { type:'critical', icon:'!', text:'Beta Solutions затримує оплату вже 3 цикли підряд — ₴185K/міс під ризиком' },
+    { type:'warning',  icon:'↑', text:'SaaS витрати на 37% вище середнього для SaaS-команди 12 осіб' },
+    { type:'warning',  icon:'↑', text:'AWS зростання +185% за місяць — аномальний spike виявлено' },
+    { type:'info',     icon:'→', text:'Виконавши всі дії в таблиці нижче — Score зросте до 91/100' },
+  ],
+};
+
+const RUNWAY_DATA = {
+  cash: 2_450_000,
+  revenue: 996_000,
+  costs: 950_000,
+  scenarios: [
+    { label:'Поточний тренд',      revM:1.00, expM:1.00, desc:'Базовий сценарій' },
+    { label:'Скорочення SaaS −15%',revM:1.00, expM:0.85, desc:'Оптимізація підписок' },
+    { label:'Hiring +20%',         revM:1.10, expM:1.18, desc:'Ріст команди 12→14' },
+    { label:'Дохід −30%',          revM:0.70, expM:1.00, desc:'Втрата ключових клієнтів' },
+    { label:'Кризовий −50%',       revM:0.50, expM:1.00, desc:'Тяжкий ринок' },
+    { label:'Нульовий дохід',      revM:0.00, expM:1.00, desc:'Стрес-тест: виживання' },
+  ],
+};
+
+function _runwayMonths(revM, expM) {
+  const net = RUNWAY_DATA.revenue * revM - RUNWAY_DATA.costs * expM;
+  if (net >= 0) return Infinity;
+  return RUNWAY_DATA.cash / (-net);
+}
+
+function _fmtRunway(months) {
+  if (!isFinite(months)) return '∞';
+  if (months >= 24) return Math.round(months) + ' міс.';
+  if (months >= 1)  return months.toFixed(1) + ' міс.';
+  return Math.round(months * 30) + ' дн.';
+}
+
+function _runwayColor(months) {
+  if (!isFinite(months) || months >= 12) return 'green';
+  if (months >= 6) return 'amber';
+  return 'red';
+}
+
+// ── Render CFO Score page ─────────────────────────────────
+function renderCFOScore() {
+  const s = CFO_SCORE;
+  const arcEl = document.getElementById('scoreArc');
+  const numEl = document.getElementById('scoreNumber');
+  const labelEl = document.getElementById('scoreLabel');
+  const subEl   = document.getElementById('scoreSub');
+  const prevEl  = document.getElementById('scoreVsPrev');
+  const dimsEl  = document.getElementById('scoreDimensions');
+  const alertsEl = document.getElementById('scoreAlerts');
+  const actEl   = document.getElementById('scoreActionsBody');
+  const tgtEl   = document.getElementById('scoreActionsTarget');
+
+  if (!numEl) return; // page not in DOM yet
+
+  // Animate ring
+  if (arcEl) {
+    const circum = 427;
+    const offset = circum - (s.total / 100) * circum;
+    const col = s.total >= 80 ? '#2A6E46' : s.total >= 60 ? '#C4882E' : '#B83228';
+    arcEl.setAttribute('stroke-dashoffset', offset);
+    arcEl.setAttribute('stroke', col);
+  }
+
+  if (numEl) numEl.textContent = s.total;
+  if (labelEl) {
+    const col = s.total >= 80 ? 'var(--green)' : s.total >= 60 ? 'var(--amber)' : 'var(--red)';
+    labelEl.style.color = col;
+    labelEl.textContent = s.label;
+  }
+  if (subEl)  subEl.textContent = s.sublabel;
+  if (prevEl) {
+    const diff = s.total - s.prev;
+    const sign = diff > 0 ? '+' : '';
+    prevEl.textContent = `${sign}${diff} за місяць`;
+    prevEl.style.background = diff > 0 ? 'rgba(42,110,70,.1)' : 'rgba(184,50,40,.1)';
+    prevEl.style.color = diff > 0 ? 'var(--green)' : 'var(--red)';
+  }
+
+  // Dimensions
+  if (dimsEl) {
+    const COLOR = { green:'var(--green)', amber:'var(--amber)', red:'var(--red)' };
+    const BORDER = { green:'var(--green)', amber:'var(--amber)', red:'var(--red)' };
+    dimsEl.innerHTML = '';
+    s.dimensions.forEach(d => {
+      const col = COLOR[d.color];
+      const trendSign = d.trend.startsWith('+') ? '+' : (d.trend === '0' ? '=' : '');
+      const trendColor = d.trend.startsWith('+') ? 'var(--green)' : (d.trend === '0' ? 'var(--warm)' : 'var(--red)');
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.style.cssText = `border-left:3px solid ${col};padding:12px 16px;`;
+      div.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
+          <div style="font-size:12.5px;font-weight:700;color:var(--ink);">${esc(d.label)}</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:11px;font-weight:600;color:${trendColor};">${trendSign}${esc(d.trend)}</span>
+            <span style="font-size:19px;font-weight:800;font-family:'DM Mono',monospace;color:${col};">${d.score}</span>
+          </div>
+        </div>
+        <div style="height:4px;background:var(--cream3);border-radius:3px;overflow:hidden;margin-bottom:6px;">
+          <div style="width:${d.score}%;height:100%;background:${col};border-radius:3px;transition:width 1s ease;"></div>
+        </div>
+        <div style="font-size:11px;color:var(--warm);">${esc(d.insight)}</div>`;
+      dimsEl.appendChild(div);
+    });
+  }
+
+  // Alerts
+  if (alertsEl) {
+    const TYPE = {
+      critical: { border:'var(--red)',  bg:'var(--red-bg)',    text:'КРИТИЧНО', tc:'var(--red)' },
+      warning:  { border:'var(--amber)',bg:'var(--amber-bg)',  text:'УВАГА',    tc:'var(--amber)' },
+      info:     { border:'var(--blue)', bg:'var(--blue-bg)',   text:'INFO',     tc:'var(--blue)' },
+    };
+    alertsEl.innerHTML = '';
+    s.alerts.forEach(a => {
+      const t = TYPE[a.type] || TYPE.info;
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.style.cssText = `border-left:3px solid ${t.border};display:flex;align-items:center;gap:12px;padding:12px 16px;`;
+      div.innerHTML = `
+        <div style="width:32px;height:32px;border-radius:8px;background:${t.bg};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:${t.tc};flex-shrink:0;">${esc(a.icon)}</div>
+        <div style="flex:1;">
+          <span style="font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:${t.tc};margin-right:8px;">${t.text}</span>
+          <span style="font-size:12.5px;color:var(--charcoal);">${esc(a.text)}</span>
+        </div>`;
+      alertsEl.appendChild(div);
+    });
+  }
+
+  // Actions table
+  if (actEl) {
+    const DIFF = { easy:'c-g', medium:'c-a', hard:'c-r' };
+    const DIFF_LBL = { easy:'Легко', medium:'Середньо', hard:'Складно' };
+    actEl.innerHTML = '';
+    s.actions.forEach(a => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="font-weight:600;">${esc(a.text)}</td>
+        <td><span class="chip c-g">${esc(a.impact)} бали</span></td>
+        <td><span class="chip ${DIFF[a.diff]||'c-n'}">${DIFF_LBL[a.diff]||a.diff}</span></td>
+        <td class="pos">${esc(a.saving)}</td>
+        <td><button onclick="this.textContent='✓ Виконано';this.disabled=true;this.style.background='var(--green-bg)';this.style.color='var(--green)';this.style.border='1px solid #B8DFC5';" style="font-size:11px;padding:4px 12px;border-radius:5px;background:var(--ink);color:var(--cream);border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;">Зробити</button></td>`;
+      actEl.appendChild(tr);
+    });
+  }
+  if (tgtEl) {
+    const totalSaving = s.actions.reduce((sum, a) => {
+      const m = a.saving.match(/[\d,]+/);
+      return sum + (m ? parseInt(m[0].replace(/,/g,'')) : 0);
+    }, 0);
+    tgtEl.textContent = `Загальна потенційна економія: ₴${(totalSaving/1000).toFixed(0)}K/міс`;
+  }
+}
+
+// ── Render Smart Runway Engine ────────────────────────────
+function renderRunwayEngine() {
+  const el = document.getElementById('runwayEngine');
+  if (!el) return;
+
+  const rows = RUNWAY_DATA.scenarios.map(sc => {
+    const m = _runwayMonths(sc.revM, sc.expM);
+    const col = _runwayColor(m);
+    const fmt = _fmtRunway(m);
+    const net = Math.round(RUNWAY_DATA.revenue * sc.revM - RUNWAY_DATA.costs * sc.expM);
+    const netStr = net >= 0 ? `+₴${(net/1000).toFixed(0)}K` : `−₴${(Math.abs(net)/1000).toFixed(0)}K`;
+    const netCol = net >= 0 ? 'var(--green)' : 'var(--red)';
+    const bar = isFinite(m) ? Math.min(100, Math.round(m / 24 * 100)) : 100;
+    const barCol = col === 'green' ? 'var(--green)' : col === 'amber' ? 'var(--amber)' : 'var(--red)';
+    return `<tr>
+      <td style="font-weight:600;">${esc(sc.label)}</td>
+      <td style="font-size:11px;color:var(--warm);">${esc(sc.desc)}</td>
+      <td><div style="display:flex;align-items:center;gap:8px;">
+        <div style="flex:1;height:5px;background:var(--cream3);border-radius:3px;min-width:48px;">
+          <div style="width:${bar}%;height:100%;background:${barCol};border-radius:3px;"></div></div>
+        <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:${barCol};min-width:56px;text-align:right;">${fmt}</span>
+      </div></td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:${netCol};">${netStr}/міс</td>
+    </tr>`;
+  }).join('');
+
+  // Critical date — when would zero-revenue runway hit
+  const zeroM = _runwayMonths(0, 1);
+  const critDays = Math.round(zeroM * 30);
+  const baseM = _runwayMonths(1, 1);
+
+  el.innerHTML = `
+    <div class="card" style="border-top:3px solid var(--ink);margin-bottom:14px;">
+      <div class="card-hd">
+        <div>
+          <div class="card-t">Smart Runway Engine</div>
+          <div class="card-s">Сценарний аналіз · Що буде якщо…</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+        <div style="background:var(--green-bg);border:1px solid #B8DFC5;border-radius:10px;padding:14px;text-align:center;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--green);margin-bottom:6px;">Поточна траєкторія</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--green);">${isFinite(baseM) ? baseM.toFixed(1)+' міс.' : '∞'}</div>
+          <div style="font-size:11px;color:var(--green);margin-top:3px;">Прибутково</div>
+        </div>
+        <div style="background:var(--red-bg);border:1px solid #F0C4C0;border-radius:10px;padding:14px;text-align:center;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--red);margin-bottom:6px;">Нульовий дохід</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--red);">${critDays} дн.</div>
+          <div style="font-size:11px;color:var(--red);margin-top:3px;">До кінця грошей</div>
+        </div>
+        <div style="background:var(--amber-bg);border:1px solid #F0DDB8;border-radius:10px;padding:14px;text-align:center;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--amber);margin-bottom:6px;">Дохід −30%</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--amber);">${_fmtRunway(_runwayMonths(0.7,1))}</div>
+          <div style="font-size:11px;color:var(--amber);margin-top:3px;">Якщо втратите клієнтів</div>
+        </div>
+      </div>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Сценарій</th><th>Умова</th><th>Runway</th><th>Net/міс</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px;padding:12px 14px;background:var(--cream);border-radius:9px;border-left:3px solid var(--amber);">
+        <span style="font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--amber);margin-right:8px;">ВИСНОВОК</span>
+        <span style="font-size:12.5px;color:var(--charcoal);">
+          При поточному стані компанія прибуткова (+₴${((RUNWAY_DATA.revenue - RUNWAY_DATA.costs)/1000).toFixed(0)}K/міс).
+          Критична точка: втрата >54% доходу одразу.
+          Рекомендація: розподілити ризик між клієнтами та скоротити SaaS на 15%.
+        </span>
+      </div>
+    </div>`;
+}
+
+// Init calls on nav to score/whatif pages
+document.addEventListener('DOMContentLoaded', () => {
+  // Render immediately if page is already shown
+  renderCFOScore();
+  renderRunwayEngine();
+});
+
+// Re-render when navigating to these pages
+const _origNav = typeof nav === 'function' ? nav : null;
+// Hook nav to re-render on page switch
+document.addEventListener('click', e => {
+  const sbItem = e.target.closest('.sb-item[data-page]');
+  if (!sbItem) return;
+  const p = sbItem.dataset.page;
+  if (p === 'score')  setTimeout(renderCFOScore,  50);
+  if (p === 'whatif') setTimeout(renderRunwayEngine, 50);
+});

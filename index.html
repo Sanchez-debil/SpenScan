@@ -640,64 +640,36 @@
     <div class="page" id="pg-score">
       <div class="g2" style="margin-bottom:14px;">
         <div class="card" style="text-align:center;padding:32px 24px;border-top:3px solid var(--green);">
-          <div style="font-size:11px;font-weight:700;color:var(--warm);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;font-family:'DM Mono',monospace;">Загальний AI Score</div>
-          <div style="position:relative;width:160px;height:160px;margin:0 auto 20px;">
+          <div style="font-size:10px;font-weight:700;color:var(--warm);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;font-family:'DM Mono',monospace;">CFO HEALTH SCORE</div>
+          <div style="position:relative;width:160px;height:160px;margin:0 auto 16px;">
             <svg viewBox="0 0 160 160" style="transform:rotate(-90deg)">
               <circle cx="80" cy="80" r="68" fill="none" stroke="#E3DDD1" stroke-width="12"/>
-              <circle cx="80" cy="80" r="68" fill="none" stroke="#2A6E46" stroke-width="12" stroke-dasharray="427" stroke-dashoffset="115" stroke-linecap="round"/>
+              <circle cx="80" cy="80" r="68" fill="none" id="scoreArc" stroke="#2A6E46" stroke-width="12"
+                stroke-dasharray="427" stroke-dashoffset="427" stroke-linecap="round"
+                style="transition:stroke-dashoffset 1.2s ease,stroke .4s;"/>
             </svg>
             <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-              <div style="font-family:'DM Serif Display',serif;font-size:48px;color:var(--green);line-height:1;">73</div>
+              <div id="scoreNumber" style="font-family:'DM Serif Display',serif;font-size:48px;color:var(--green);line-height:1;">—</div>
               <div style="font-size:11px;color:var(--warm);font-weight:600;">/ 100</div>
             </div>
           </div>
-          <div style="font-size:18px;font-weight:700;color:var(--green);margin-bottom:6px;">Добре</div>
-          <div style="font-size:12px;color:var(--warm);line-height:1.6;">Є зони для покращення.<br>Потенціал зростання до 91/100</div>
+          <div id="scoreLabel" style="font-size:18px;font-weight:700;color:var(--green);margin-bottom:4px;">Розрахунок…</div>
+          <div id="scoreSub" style="font-size:12px;color:var(--warm);line-height:1.6;"></div>
+          <div id="scoreVsPrev" style="font-size:11px;font-weight:600;margin-top:10px;padding:3px 12px;border-radius:20px;display:inline-block;"></div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          <div class="card" style="border-left:3px solid var(--green);">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-              <div style="font-size:13px;font-weight:700;">Фінансове здоров'я</div>
-              <div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--green);">86</div>
-            </div>
-            <div style="height:5px;background:var(--cream3);border-radius:3px;overflow:hidden;"><div style="width:86%;height:100%;background:var(--green);border-radius:3px;"></div></div>
-            <div style="font-size:11px;color:var(--warm);margin-top:6px;">Дохід зростає, маржа вища за ринок</div>
-          </div>
-          <div class="card" style="border-left:3px solid var(--amber);">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-              <div style="font-size:13px;font-weight:700;">Ефективність витрат</div>
-              <div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--amber);">61</div>
-            </div>
-            <div style="height:5px;background:var(--cream3);border-radius:3px;overflow:hidden;"><div style="width:61%;height:100%;background:var(--amber);border-radius:3px;"></div></div>
-            <div style="font-size:11px;color:var(--warm);margin-top:6px;">SaaS витрати вище ринку на 35%</div>
-          </div>
-          <div class="card" style="border-left:3px solid var(--red);">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-              <div style="font-size:13px;font-weight:700;">Burn Risk</div>
-              <div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--red);">58</div>
-            </div>
-            <div style="height:5px;background:var(--cream3);border-radius:3px;overflow:hidden;"><div style="width:58%;height:100%;background:var(--red);border-radius:3px;"></div></div>
-            <div style="font-size:11px;color:var(--warm);margin-top:6px;">Витрати ростуть швидше за дохід</div>
-          </div>
-          <div class="card" style="border-left:3px solid var(--blue);">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-              <div style="font-size:13px;font-weight:700;">SaaS Ефективність</div>
-              <div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--blue);">54</div>
-            </div>
-            <div style="height:5px;background:var(--cream3);border-radius:3px;overflow:hidden;"><div style="width:54%;height:100%;background:var(--blue);border-radius:3px;"></div></div>
-            <div style="font-size:11px;color:var(--warm);margin-top:6px;">6 невикористовуваних ліцензій</div>
-          </div>
-        </div>
+        <div id="scoreDimensions" style="display:flex;flex-direction:column;gap:10px;"></div>
       </div>
+      <div id="scoreAlerts" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>
       <div class="card">
-        <div class="card-hd"><div><div class="card-t">Що покращить ваш Score</div><div class="card-s">Конкретні дії для зростання до 91/100</div></div></div>
+        <div class="card-hd"><div>
+          <div class="card-t">Що покращить ваш Score</div>
+          <div id="scoreActionsTarget" class="card-s">Конкретні дії для зростання</div>
+        </div></div>
         <div class="card-body">
-          <div class="tbl"><table><thead><tr><th>Дія</th><th>Вплив на Score</th><th>Складність</th><th>Економія</th><th></th></tr></thead><tbody>
-            <tr><td style="font-weight:600;">Скасувати Zoom (дублює Teams)</td><td><span class="chip c-g">+4 бали</span></td><td><span class="chip c-g">Легко</span></td><td class="pos">₴3,560/міс</td><td><button onclick="flash(this,'Виконано!')" style="font-size:11px;padding:4px 12px;border-radius:5px;background:var(--ink);color:var(--cream);border:none;cursor:pointer;font-family:'DM Sans',sans-serif;">Зробити</button></td></tr>
-            <tr><td style="font-weight:600;">Знизити Figma до 5 місць</td><td><span class="chip c-g">+3 бали</span></td><td><span class="chip c-g">Легко</span></td><td class="pos">₴4,480/міс</td><td><button onclick="flash(this,'Виконано!')" style="font-size:11px;padding:4px 12px;border-radius:5px;background:var(--ink);color:var(--cream);border:none;cursor:pointer;font-family:'DM Sans',sans-serif;">Зробити</button></td></tr>
-            <tr><td style="font-weight:600;">Скасувати Tableau</td><td><span class="chip c-g">+5 балів</span></td><td><span class="chip c-g">Легко</span></td><td class="pos">₴5,840/міс</td><td><button onclick="flash(this,'Виконано!')" style="font-size:11px;padding:4px 12px;border-radius:5px;background:var(--ink);color:var(--cream);border:none;cursor:pointer;font-family:'DM Sans',sans-serif;">Зробити</button></td></tr>
-            <tr><td style="font-weight:600;">Оптимізувати AWS</td><td><span class="chip c-a">+6 балів</span></td><td><span class="chip c-a">Середньо</span></td><td class="pos">₴8,000/міс</td><td><button onclick="flash(this,'Призначено')" style="font-size:11px;padding:4px 12px;border-radius:5px;background:var(--cream2);color:var(--charcoal);border:1px solid var(--border);cursor:pointer;font-family:'DM Sans',sans-serif;">Делегувати</button></td></tr>
-          </tbody></table></div>
+          <div class="tbl"><table>
+            <thead><tr><th>Дія</th><th>Вплив на Score</th><th>Складність</th><th>Економія/міс</th><th></th></tr></thead>
+            <tbody id="scoreActionsBody"></tbody>
+          </table></div>
         </div>
       </div>
     </div>
@@ -781,6 +753,8 @@
     <div class="page" id="pg-whatif">
       <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--ink);margin-bottom:4px;">What If Сценарії</div>
       <div style="font-size:12px;color:var(--warm);font-family:'DM Mono',monospace;margin-bottom:16px;">Змоделюй майбутнє компанії перед прийняттям рішень</div>
+      <!-- Smart Runway Engine — рендериться JS -->
+      <div id="runwayEngine"></div>
       <div class="g2" style="margin-bottom:14px;">
         <div class="card">
           <div class="card-hd"><div><div class="card-t">Налаштування сценарію</div><div class="card-s">Змінюй параметри — AI перераховує</div></div></div>
