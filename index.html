@@ -56,6 +56,7 @@
     <div class="sb-group">Акаунт</div>
     <div class="sb-item" data-page="subscription"><span class="sb-icon">$</span>Підписка</div>
     <div class="sb-item" data-page="settings"><span class="sb-icon">.</span>Налаштування</div>
+    <div class="sb-item" onclick="logout()" style="margin-top:4px;color:var(--warm);"><span class="sb-icon">←</span>Вийти</div>
   </nav>
   <div class="sb-footer">
     <div class="sb-bank-card" id="sbBankCard">
@@ -93,6 +94,46 @@
     </div>
   </div>
 
+
+  <!-- ══ AUTH OVERLAY ══ -->
+  <div id="authOverlay" style="display:none;position:fixed;inset:0;z-index:8000;background:var(--cream);overflow-y:auto;">
+    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;">
+      <div style="width:100%;max-width:400px;">
+
+        <!-- Logo -->
+        <div style="text-align:center;margin-bottom:32px;">
+          <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink);letter-spacing:-.5px;">SpenScan</div>
+          <div style="font-size:13px;color:var(--warm);margin-top:4px;">Фінансова аналітика для бізнесу</div>
+        </div>
+
+        <!-- Card -->
+        <div style="background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:28px;">
+          <!-- Tabs -->
+          <div style="display:flex;gap:0;background:var(--cream2);border-radius:9px;padding:3px;margin-bottom:24px;">
+            <button id="authTabLogin" onclick="switchAuthTab('login')" style="flex:1;padding:7px;border-radius:7px;border:none;background:var(--white);font-size:13px;font-weight:700;color:var(--ink);cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 1px 3px rgba(0,0,0,.07);transition:all .15s;">Вхід</button>
+            <button id="authTabSignup" onclick="switchAuthTab('signup')" style="flex:1;padding:7px;border-radius:7px;border:none;background:none;font-size:13px;font-weight:600;color:var(--warm);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;">Реєстрація</button>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <label style="font-size:12px;font-weight:700;color:var(--ink);display:block;margin-bottom:5px;letter-spacing:.02em;">EMAIL</label>
+              <input id="authEmail" type="email" placeholder="you@company.com" autocomplete="email" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--cream2);color:var(--ink);outline:none;transition:border-color .15s;" onfocus="this.style.borderColor='var(--ink)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:700;color:var(--ink);display:block;margin-bottom:5px;letter-spacing:.02em;">ПАРОЛЬ</label>
+              <input id="authPassword" type="password" placeholder="Мінімум 8 символів" autocomplete="current-password" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--cream2);color:var(--ink);outline:none;transition:border-color .15s;" onfocus="this.style.borderColor='var(--ink)'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')submitAuth()">
+            </div>
+            <div id="authError" style="display:none;font-size:12px;color:var(--red);background:rgba(184,50,40,.07);border:1px solid rgba(184,50,40,.2);border-radius:7px;padding:9px 12px;"></div>
+            <button id="authSubmitBtn" onclick="submitAuth()" style="width:100%;padding:12px;background:var(--ink);color:var(--cream);border:none;border-radius:9px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;">Увійти</button>
+          </div>
+        </div>
+
+        <div style="text-align:center;margin-top:16px;font-size:11.5px;color:var(--warm);">
+          Захищено SSL · Дані зберігаються в Europian Union
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- API KEY BANNER -->
   <div id="apiBanner" style="background:var(--charcoal);padding:10px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,.06);">

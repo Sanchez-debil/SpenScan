@@ -15,6 +15,8 @@ const CFG = {
 const state = {
   apiKey: '',
   serverKey: false,
+  user: null,
+  _authTab: 'login',
   sub: null, // { active, plan, email, customerId, periodEnd } — з localStorage
   chatHistory: [],
   selectedCountry: 'DE',
@@ -1034,6 +1036,94 @@ function initListeners() {
 }
 
 // ══ INIT ══
+// ══ AUTH ══
+
+function showAuthOverlay() {
+  const o = $('authOverlay');
+  if (o) o.style.display = 'block';
+}
+
+function hideAuthOverlay() {
+  const o = $('authOverlay');
+  if (o) o.style.display = 'none';
+}
+
+function switchAuthTab(tab) {
+  const isLogin = tab === 'login';
+  const loginBtn  = $('authTabLogin');
+  const signupBtn = $('authTabSignup');
+  const submitBtn = $('authSubmitBtn');
+  const active  = 'background:var(--white);font-weight:700;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.07);';
+  const passive = 'background:none;font-weight:600;color:var(--warm);box-shadow:none;';
+  if (loginBtn)  loginBtn.style.cssText  += isLogin  ? active : passive;
+  if (signupBtn) signupBtn.style.cssText += !isLogin ? active : passive;
+  if (submitBtn) submitBtn.textContent = isLogin ? 'Увійти' : 'Створити акаунт';
+  const pwdInput = $('authPassword');
+  if (pwdInput) pwdInput.autocomplete = isLogin ? 'current-password' : 'new-password';
+  $('authError') && ($('authError').style.display = 'none');
+  state._authTab = tab;
+}
+
+async function submitAuth() {
+  const email    = ($('authEmail')?.value    || '').trim();
+  const password = ($('authPassword')?.value || '').trim();
+  const action   = state._authTab || 'login';
+  const errEl    = $('authError');
+  const btn      = $('authSubmitBtn');
+
+  if (!email || !password) {
+    if (errEl) { errEl.textContent = 'Заповніть всі поля'; errEl.style.display = 'block'; }
+    return;
+  }
+
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+  if (errEl) errEl.style.display = 'none';
+
+  try {
+    const r = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, email, password }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Помилка авторизації');
+
+    localStorage.setItem('spenscan_token', d.token);
+    state.user = { email };
+    hideAuthOverlay();
+    showToast(`Ласкаво просимо, ${email}`, 'success');
+  } catch (err) {
+    if (errEl) { errEl.textContent = err.message; errEl.style.display = 'block'; }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = action === 'login' ? 'Увійти' : 'Створити акаунт'; }
+  }
+}
+
+function logout() {
+  localStorage.removeItem('spenscan_token');
+  state.user = null;
+  showAuthOverlay();
+  showToast('Ви вийшли з акаунту', 'info');
+}
+
+async function initAuth() {
+  const token = localStorage.getItem('spenscan_token');
+  if (!token) { showAuthOverlay(); return; }
+
+  try {
+    const r = await fetch('/api/auth', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) throw new Error();
+    const user = await r.json();
+    state.user = user;
+    hideAuthOverlay();
+  } catch {
+    localStorage.removeItem('spenscan_token');
+    showAuthOverlay();
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initTables();
   initAIRecs();
@@ -1043,6 +1133,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadSub();
   handleCheckoutReturn();
   renderSubPage();
+  initAuth();
 });
 
 // ══════════════════════════════════════════════
