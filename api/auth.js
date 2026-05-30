@@ -15,22 +15,25 @@ async function kvGet(key) {
     { headers: { Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}` } }
   );
   const d = await r.json();
-  return d.result ? JSON.parse(d.result) : null;
+  if (d.result === null || d.result === undefined) return null;
+  try {
+    const parsed = JSON.parse(d.result);
+    // handle legacy double-encoded values
+    return typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
+  } catch { return null; }
 }
 
 async function kvSet(key, value, exSec) {
-  const qs = exSec ? `?ex=${exSec}` : '';
-  await fetch(
-    `${process.env.KV_REST_API_URL}/set/${encodeURIComponent(key)}${qs}`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(JSON.stringify(value)),
-    }
-  );
+  const cmd = ['SET', key, JSON.stringify(value)];
+  if (exSec) cmd.push('EX', String(exSec));
+  await fetch(`${process.env.KV_REST_API_URL}/`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(cmd),
+  });
 }
 
 // ── Password ─────────────────────────────────────────────
