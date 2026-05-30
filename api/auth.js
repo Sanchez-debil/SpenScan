@@ -26,7 +26,7 @@ async function kvGet(key) {
 async function kvSet(key, value, exSec) {
   const cmd = ['SET', key, JSON.stringify(value)];
   if (exSec) cmd.push('EX', String(exSec));
-  await fetch(`${process.env.KV_REST_API_URL}/`, {
+  const r = await fetch(`${process.env.KV_REST_API_URL}/`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}`,
@@ -34,6 +34,7 @@ async function kvSet(key, value, exSec) {
     },
     body: JSON.stringify(cmd),
   });
+  if (!r.ok) throw new Error(`KV write failed: ${r.status}`);
 }
 
 // ── Password ─────────────────────────────────────────────
@@ -128,7 +129,8 @@ module.exports = async function handler(req, res) {
     if (!user) return res.status(401).json({ error: 'Невірний email або пароль' });
 
     const hash = hashPwd(password, user.salt);
-    const valid = crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(user.hash));
+    let valid = false;
+    try { valid = crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(user.hash)); } catch { valid = false; }
     if (!valid) return res.status(401).json({ error: 'Невірний email або пароль' });
 
     const token = signJWT({ email: user.email }, jwtSecret);

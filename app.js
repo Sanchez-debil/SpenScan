@@ -1093,6 +1093,7 @@ async function submitAuth() {
     let d = {};
     try { d = await r.json(); } catch { /* non-JSON response */ }
     if (!r.ok) throw new Error(d.error || `Помилка сервера (${r.status}). Перевірте налаштування KV у Vercel.`);
+    if (!d.token) throw new Error('Сервер не повернув токен — спробуйте ще раз');
 
     localStorage.setItem('spenscan_token', d.token);
     state.user = { email };
