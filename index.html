@@ -148,30 +148,6 @@
 
     <!-- OVERVIEW -->
     <div class="page on" id="pg-overview">
-      <div class="alert">
-        <div class="alert-left">
-          <div class="alert-icon">AI</div>
-          <div>
-            <div class="alert-title">Виявлено ₴14,280/міс потенційної економії — 6 проблем</div>
-            <div class="alert-desc">Дублікати інструментів, мертві ліцензії, зайві місця в підписках</div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
-          <div class="alert-amount">₴14,280</div>
-          <button class="btn" style="background:var(--sand);color:var(--ink);border:none;" onclick="nav('audit')">Переглянути</button>
-        </div>
-      </div>
-
-      <div class="kpis">
-        <div class="kpi" style="border-top-color:var(--green);"><div class="kpi-l">Дохід (30д)</div><div class="kpi-v">₴996K</div><div class="kpi-d up">+ 12.4% vs минулий</div></div>
-        <div class="kpi" style="border-top-color:var(--red);"><div class="kpi-l">Витрати (30д)</div><div class="kpi-v">₴334K</div><div class="kpi-d dn">+ 18.2% ростуть швидше</div></div>
-        <div class="kpi" style="border-top-color:var(--ink);"><div class="kpi-l">Чистий прибуток</div><div class="kpi-v">₴662K</div><div class="kpi-d up">+ 8.1%</div></div>
-        <div class="kpi" style="border-top-color:var(--amber);"><div class="kpi-l">Баланс рахунку</div><div class="kpi-v">₴2.45M</div><div class="kpi-d nt">Стабільно</div></div>
-        <div class="kpi" style="border-top-color:var(--blue);"><div class="kpi-l">Burn Rate</div><div class="kpi-v">₴11K/д</div><div class="kpi-d dn">+ 6.2%</div></div>
-      </div>
-
-      <!-- AI Actions — рендериться JS -->
-      <div id="aiActionsCard"></div>
 
       <div class="g32" style="margin-bottom:14px;">
         <div class="card">
@@ -182,6 +158,14 @@
           <div class="card-hd"><div><div class="card-t">Розбивка витрат</div><div class="card-s">За категоріями</div></div></div>
           <div class="card-body"><canvas id="donutChart" height="185"></canvas></div>
         </div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi" style="border-top-color:var(--green);"><div class="kpi-l">Дохід (30д)</div><div class="kpi-v">₴996K</div><div class="kpi-d up">+ 12.4% vs минулий</div></div>
+        <div class="kpi" style="border-top-color:var(--red);"><div class="kpi-l">Витрати (30д)</div><div class="kpi-v">₴334K</div><div class="kpi-d dn">+ 18.2% ростуть швидше</div></div>
+        <div class="kpi" style="border-top-color:var(--ink);"><div class="kpi-l">Чистий прибуток</div><div class="kpi-v">₴662K</div><div class="kpi-d up">+ 8.1%</div></div>
+        <div class="kpi" style="border-top-color:var(--amber);"><div class="kpi-l">Баланс рахунку</div><div class="kpi-v">₴2.45M</div><div class="kpi-d nt">Стабільно</div></div>
+        <div class="kpi" style="border-top-color:var(--blue);"><div class="kpi-l">Burn Rate</div><div class="kpi-v">₴11K/д</div><div class="kpi-d dn">+ 6.2%</div></div>
       </div>
 
       <div class="g2">
@@ -199,6 +183,9 @@
           <div class="card-body" id="ovAI"></div>
         </div>
       </div>
+
+      <!-- AI Actions — внизу -->
+      <div id="aiActionsCard"></div>
     </div>
 
     <!-- CASHFLOW -->
@@ -829,7 +816,7 @@
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
         <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--ink);">Звіти</div>
         <button id="boardReportBtn" onclick="generateBoardReport()" style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:var(--ink);color:var(--cream);border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;">
-          📄 Генерувати Board Report
+          Генерувати Board Report
         </button>
       </div>
       <div class="g3">
@@ -1004,12 +991,12 @@
           <div style="font-size:10.5px;color:var(--warm);">ING, ABN AMRO, Rabobank</div>
         </div>
         <div class="bank-country-card" onclick="selectCountry(this,'EU')" data-country="EU">
-          <div style="font-size:22px;margin-bottom:6px;">🌍</div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:var(--warm);">EU</div>
           <div style="font-size:12.5px;font-weight:600;">Revolut / Wise</div>
           <div style="font-size:10.5px;color:var(--warm);">Будь-яка країна ЄС</div>
         </div>
         <div class="bank-country-card" onclick="selectCountry(this,'OTHER')" data-country="OTHER">
-          <div style="font-size:22px;margin-bottom:6px;">🏦</div>
+          <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:var(--warm);">BK</div>
           <div style="font-size:12.5px;font-weight:600;">Інша країна ЄС</div>
           <div style="font-size:10.5px;color:var(--warm);">2000+ банків Європи</div>
         </div>

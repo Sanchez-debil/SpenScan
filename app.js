@@ -441,7 +441,7 @@ async function handleCheckoutReturn() {
       if (d.active) {
         saveSub(d);
         renderSubPage();
-        showToast(`Підписка ${d.plan === 'pro' ? 'Про' : 'Стартер'} активована! Дякуємо 🎉`, 'success');
+        showToast(`Підписка ${d.plan === 'pro' ? 'Про' : 'Стартер'} активована. Дякуємо!`, 'success');
         nav('subscription');
       } else {
         showToast('Оплата не підтверджена — спробуйте ще раз', 'error');
@@ -2066,15 +2066,15 @@ const SPEND_INTEL = {
   marketPerPerson: 7_200, // середній SaaS spend/особу для IT 12 осіб
 
   tools: [
-    { name:'Figma Pro',       cat:'Дизайн',    cost:4_480, seats:8,  active:5,  market:3_500, issue:'unused',    unusedN:3, savings:1_680, alt:null,                      icon:'🎨' },
-    { name:'Zoom Business',   cat:'Відео',     cost:3_560, seats:12, active:9,  market:2_400, issue:'duplicate', unusedN:0, savings:3_560, alt:'Microsoft Teams',         icon:'📹' },
-    { name:'Slack Business+', cat:'Месенджер', cost:7_500, seats:12, active:11, market:6_800, issue:'ok',        unusedN:1, savings:0,     alt:null,                      icon:'💬' },
-    { name:'AWS Cloud',       cat:'Хмара',     cost:16_800,seats:null,active:null,market:12_000,issue:'overpriced',unusedN:0,savings:4_800,alt:'Reserved Instances −29%', icon:'☁️' },
-    { name:'Tableau',         cat:'Аналітика', cost:5_840, seats:5,  active:2,  market:0,     issue:'free_alt',  unusedN:3, savings:5_840, alt:'Looker Studio (безкошт.)',icon:'📊' },
-    { name:'Adobe CC',        cat:'Дизайн',    cost:12_800,seats:15, active:10, market:10_500, issue:'unused',   unusedN:5, savings:4_267, alt:null,                      icon:'🖼️' },
-    { name:'Microsoft Teams', cat:'Відео',     cost:3_680, seats:12, active:8,  market:3_200, issue:'ok',        unusedN:4, savings:0,     alt:null,                      icon:'📹' },
-    { name:'Miro',            cat:'Дошка',     cost:3_520, seats:8,  active:4,  market:1_500, issue:'unused',    unusedN:4, savings:1_760, alt:'FigJam (безкошт.)',       icon:'📌' },
-    { name:'Notion Business', cat:'Знання',    cost:2_880, seats:12, active:10, market:2_500, issue:'ok',        unusedN:2, savings:0,     alt:null,                      icon:'📝' },
+    { name:'Figma Pro',       cat:'Дизайн',    cost:4_480, seats:8,  active:5,  market:3_500, issue:'unused',    unusedN:3, savings:1_680, alt:null,                      icon:'FG' },
+    { name:'Zoom Business',   cat:'Відео',     cost:3_560, seats:12, active:9,  market:2_400, issue:'duplicate', unusedN:0, savings:3_560, alt:'Microsoft Teams',         icon:'ZM' },
+    { name:'Slack Business+', cat:'Месенджер', cost:7_500, seats:12, active:11, market:6_800, issue:'ok',        unusedN:1, savings:0,     alt:null,                      icon:'SL' },
+    { name:'AWS Cloud',       cat:'Хмара',     cost:16_800,seats:null,active:null,market:12_000,issue:'overpriced',unusedN:0,savings:4_800,alt:'Reserved Instances −29%', icon:'AW' },
+    { name:'Tableau',         cat:'Аналітика', cost:5_840, seats:5,  active:2,  market:0,     issue:'free_alt',  unusedN:3, savings:5_840, alt:'Looker Studio (безкошт.)',icon:'TB' },
+    { name:'Adobe CC',        cat:'Дизайн',    cost:12_800,seats:15, active:10, market:10_500, issue:'unused',   unusedN:5, savings:4_267, alt:null,                      icon:'AD' },
+    { name:'Microsoft Teams', cat:'Відео',     cost:3_680, seats:12, active:8,  market:3_200, issue:'ok',        unusedN:4, savings:0,     alt:null,                      icon:'MS' },
+    { name:'Miro',            cat:'Дошка',     cost:3_520, seats:8,  active:4,  market:1_500, issue:'unused',    unusedN:4, savings:1_760, alt:'FigJam (безкошт.)',       icon:'MR' },
+    { name:'Notion Business', cat:'Знання',    cost:2_880, seats:12, active:10, market:2_500, issue:'ok',        unusedN:2, savings:0,     alt:null,                      icon:'NT' },
   ],
 };
 
@@ -2202,7 +2202,7 @@ function renderRevenueRisk() {
     high:   { label:'Високий',   col:'var(--red)',   bg:'var(--red-bg)'   },
   };
   const TREND_MAP = {
-    stable:   '→', growing: '↑', declining: '↓', late: '⚠',
+    stable:   '→', growing: '↑', declining: '↓', late: '!',
   };
 
   // Concentration bar
@@ -2219,7 +2219,7 @@ function renderRevenueRisk() {
     const daysBadge = c.days === null ? '—'
       : c.days <= 7  ? `<span style="color:var(--green);font-weight:700;">${c.days} дн.</span>`
       : c.days <= 20 ? `<span style="color:var(--amber);font-weight:700;">${c.days} дн.</span>`
-      : `<span style="color:var(--red);font-weight:700;">${c.days} дн. ⚠</span>`;
+      : `<span style="color:var(--red);font-weight:700;">${c.days} дн.</span>`;
     const lateBadge = c.late > 0
       ? `<span style="font-size:9px;background:var(--red-bg);color:var(--red);border-radius:20px;padding:1px 6px;font-weight:700;">${c.late}× поспіль</span>`
       : '';
@@ -2328,22 +2328,22 @@ document.addEventListener('click', e => {
 // ══════════════════════════════════════════════
 
 const AI_ACTIONS = [
-  { id:'cancel-zoom',    icon:'🚫', cat:'SaaS',    title:'Скасувати Zoom Business',
+  { id:'cancel-zoom',    icon:'ZM', cat:'SaaS',    title:'Скасувати Zoom Business',
     desc:'Дублює Microsoft Teams. Економія ₴3,560/міс → Score +4 бали',
     impact:'+4 Score · ₴3,560/міс', confirm:'Скасувати підписку Zoom Business? Зберегти ₴42,720/рік.', type:'cancel' },
-  { id:'cancel-tableau', icon:'📊', cat:'SaaS',    title:'Замінити Tableau на Looker Studio',
+  { id:'cancel-tableau', icon:'TB', cat:'SaaS',    title:'Замінити Tableau на Looker Studio',
     desc:'Looker Studio безкоштовний. Active seats: 2/5. ₴5,840/міс зекономите',
     impact:'+5 Score · ₴5,840/міс', confirm:'Перейти з Tableau на Looker Studio (Google, безкошт.)?', type:'cancel' },
-  { id:'remind-beta',    icon:'📧', cat:'Revenue', title:'Нагадування Beta Solutions',
+  { id:'remind-beta',    icon:'EM', cat:'Revenue', title:'Нагадування Beta Solutions',
     desc:'45 днів прострочення · 3-й цикл підряд · ₴185K під ризиком',
     impact:'₴185K MRR', confirm:null, type:'email' },
-  { id:'reduce-figma',   icon:'🎨', cat:'SaaS',    title:'Знизити Figma до 5 місць',
+  { id:'reduce-figma',   icon:'FG', cat:'SaaS',    title:'Знизити Figma до 5 місць',
     desc:'Active seats: 5/8. Платите за 3 невикористані місця (₴1,680/міс)',
     impact:'+3 Score · ₴1,680/міс', confirm:'Знизити план Figma з 8 до 5 місць?', type:'cancel' },
-  { id:'aws-reserved',   icon:'☁️', cat:'Infra',   title:'AWS Reserved Instances',
+  { id:'aws-reserved',   icon:'AW', cat:'Infra',   title:'AWS Reserved Instances',
     desc:'Переключити On-Demand → Reserved 1yr. Економія 29% = ₴4,800/міс',
     impact:'+6 Score · ₴4,800/міс', confirm:'Переключити AWS на Reserved Instances? Потрібен devops доступ.', type:'delegate' },
-  { id:'freeze-mkt',     icon:'❄️', cat:'Budget',  title:'Заморозити маркетинг Q2',
+  { id:'freeze-mkt',     icon:'MK', cat:'Budget',  title:'Заморозити маркетинг Q2',
     desc:'Маркетинг ROI нижчий норми 2 місяці підряд. Перерозподілити бюджет',
     impact:'₴8,000/міс вивільниться', confirm:'Заморозити бюджет маркетингу до кінця Q2?', type:'freeze' },
 ];
@@ -2533,7 +2533,7 @@ async function generateBoardReport() {
   } catch (err) {
     showToast('Помилка генерації. Перевірте API ключ.', 'error');
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '📄 Генерувати Board Report'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Генерувати Board Report'; }
   }
 }
 
@@ -2576,7 +2576,7 @@ function showReportModal(md) {
       </div>
       <div id="reportContent" style="flex:1;overflow-y:auto;padding:24px;line-height:1.65;color:var(--charcoal);">${html}</div>
       <div style="padding:16px 24px;border-top:1.5px solid var(--border);display:flex;gap:8px;flex-shrink:0;">
-        <button onclick="window.print()" class="btn btn-dark" style="flex:1;padding:11px;">🖨 Друкувати / PDF</button>
+        <button onclick="window.print()" class="btn btn-dark" style="flex:1;padding:11px;">Друкувати / PDF</button>
         <button onclick="navigator.clipboard?.writeText(${JSON.stringify(md).replace(/'/g,"\\'")}||'');showToast('Скопійовано','success')" class="btn btn-out" style="flex:1;padding:11px;">Копіювати текст</button>
         <button onclick="document.getElementById('boardReportModal').remove()" class="btn btn-out" style="padding:11px 16px;">✕</button>
       </div>
@@ -2718,21 +2718,21 @@ function renderBenchmark() {
 let _investorMode = 'investor'; // 'investor' | 'founder'
 
 const FOUNDER_VIEW = [
-  { label:'Runway (місяців)', value:'7.3', sub:'При нульовому доході — 77 днів', col:'amber', icon:'⏱' },
-  { label:'Щоденний Burn',   value:'₴11K', sub:'₴334K / 30 днів', col:'red',   icon:'🔥' },
-  { label:'Cash у банку',    value:'₴2.45M', sub:'Стабільно · +₴62K цього місяця', col:'green', icon:'🏦' },
-  { label:'Net Profit/міс',  value:'₴662K', sub:'Маржа 66.4%', col:'green', icon:'💰' },
-  { label:'Витрати завтра',  value:'₴93.5K', sub:'SaaS-цикл 1 черв.', col:'amber', icon:'📅' },
-  { label:'Efficiency Ratio',value:'1.48×', sub:'₴1 витрат → ₴1.48 доходу', col:'green', icon:'⚡' },
+  { label:'Runway (місяців)', value:'7.3', sub:'При нульовому доході — 77 днів', col:'amber', icon:'RW' },
+  { label:'Щоденний Burn',   value:'₴11K', sub:'₴334K / 30 днів', col:'red',   icon:'BR' },
+  { label:'Cash у банку',    value:'₴2.45M', sub:'Стабільно · +₴62K цього місяця', col:'green', icon:'CA' },
+  { label:'Net Profit/міс',  value:'₴662K', sub:'Маржа 66.4%', col:'green', icon:'NP' },
+  { label:'Витрати завтра',  value:'₴93.5K', sub:'SaaS-цикл 1 черв.', col:'amber', icon:'EX' },
+  { label:'Efficiency Ratio',value:'1.48×', sub:'₴1 витрат → ₴1.48 доходу', col:'green', icon:'EF' },
 ];
 
 const INVESTOR_VIEW = [
-  { label:'MRR',            value:'₴827K', sub:'+12.4% MoM · +18.6% YoY', col:'green', icon:'📈' },
-  { label:'NRR',            value:'108%',  sub:'Net Revenue Retention', col:'green', icon:'🔄' },
-  { label:'Gross Margin',   value:'66.4%', sub:'Ринок: 58.2% — вище на 8.2%', col:'green', icon:'💎' },
-  { label:'Churn (MoM)',    value:'1.8%',  sub:'Ринок: 2.5% — краще', col:'green', icon:'📉' },
-  { label:'CAC Payback',    value:'4.2 міс', sub:'Ринок: 6.1 міс', col:'green', icon:'🎯' },
-  { label:'LTV/CAC',        value:'8.4×',  sub:'Відмінний показник', col:'green', icon:'🚀' },
+  { label:'MRR',            value:'₴827K', sub:'+12.4% MoM · +18.6% YoY', col:'green', icon:'MR' },
+  { label:'NRR',            value:'108%',  sub:'Net Revenue Retention', col:'green', icon:'NR' },
+  { label:'Gross Margin',   value:'66.4%', sub:'Ринок: 58.2% — вище на 8.2%', col:'green', icon:'GM' },
+  { label:'Churn (MoM)',    value:'1.8%',  sub:'Ринок: 2.5% — краще', col:'green', icon:'CH' },
+  { label:'CAC Payback',    value:'4.2 міс', sub:'Ринок: 6.1 міс', col:'green', icon:'CA' },
+  { label:'LTV/CAC',        value:'8.4×',  sub:'Відмінний показник', col:'green', icon:'LT' },
 ];
 
 function switchInvestorMode(mode) {
@@ -2806,7 +2806,7 @@ function renderCashflowPrediction() {
   if (!el) return;
 
   const fmtK = v => v >= 0 ? '+₴' + (v/1000).toFixed(0) + 'K' : '−₴' + (Math.abs(v)/1000).toFixed(0) + 'K';
-  const TYPE_ICON = { payroll:'💼', invoice:'📄', tax:'🏛', saas:'💻' };
+  const TYPE_ICON = { payroll:'PR', invoice:'IN', tax:'TX', saas:'SW' };
   const TYPE_COL  = { payroll:'var(--amber)', invoice:'var(--green)', tax:'var(--red)', saas:'var(--blue)' };
 
   const months = CF_PRED.months.map((m, mi) => {
