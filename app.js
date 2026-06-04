@@ -2245,7 +2245,7 @@ function renderRevenueRisk() {
         </div>
       </td>
       <td>${daysBadge}</td>
-      <td><span style="font-size:15px;color:${trendCol};">${trend}</span></td>
+      <td><span style="font-size:12px;color:${trendCol};">${trend}</span></td>
       <td><span style="font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;background:${rm.bg};color:${rm.col};">${rm.label}</span></td>
     </tr>`;
   }).join('');
@@ -2375,9 +2375,9 @@ function renderAIActions() {
       btnHtml = `<button onclick="executeAction('${a.id}')" style="padding:7px 16px;border-radius:7px;background:${bg};color:${col};border:${brd};font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:opacity .15s;">${label}</button>`;
     }
 
-    return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);" id="action-row-${a.id}">
-      <div style="font-size:20px;flex-shrink:0;">${a.icon}</div>
-      <div style="flex:1;min-width:0;">
+    return `<div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);" id="action-row-${a.id}">
+      <div style="width:30px;height:30px;border-radius:7px;background:var(--cream2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--warm);flex-shrink:0;font-family:'DM Mono',monospace;">${a.icon}</div>
+      <div style="flex:1;min-width:0;overflow:hidden;">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px;">
           <span style="font-size:13px;font-weight:700;color:var(--ink);">${esc(a.title)}</span>
           <span style="font-size:9.5px;font-weight:800;letter-spacing:.04em;padding:1px 7px;border-radius:20px;background:var(--cream2);color:${catCol};">${esc(a.cat)}</span>
@@ -2673,12 +2673,12 @@ function renderBenchmark() {
       : (m.you <= m.p50 ? `-${(m.p50 - m.you).toFixed(m.unit === '₴' ? 0 : 1)}${m.unit} краще медіани` : `+${(m.you - m.p50).toFixed(1)}${m.unit} гірше медіани`);
     return `
       <div style="padding:14px 0;border-bottom:1px solid var(--border);">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:6px;">
-          <span style="font-size:13px;font-weight:700;color:var(--ink);">${esc(m.label)}</span>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-size:11.5px;color:var(--warm);">Ринок: ${fmtVal(m.p50, m.unit)}</span>
-            <span style="font-size:14px;font-weight:800;font-family:'DM Mono',monospace;color:${COL[pr.col]};">${fmtVal(m.you, m.unit)}</span>
-            <span style="font-size:9.5px;font-weight:800;padding:2px 8px;border-radius:20px;background:${BG[pr.col]||'var(--cream2)'};color:${COL[pr.col]};">${pr.label}</span>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:nowrap;gap:6px;">
+          <span style="font-size:12px;font-weight:700;color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(m.label)}</span>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <span style="font-size:10.5px;color:var(--warm);">Ринок: ${fmtVal(m.p50, m.unit)}</span>
+            <span style="font-size:12px;font-weight:800;font-family:'DM Mono',monospace;color:${COL[pr.col]};">${fmtVal(m.you, m.unit)}</span>
+            <span style="font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;background:${BG[pr.col]||'var(--cream2)'};color:${COL[pr.col]};white-space:nowrap;">${pr.label}</span>
           </div>
         </div>
         ${_benchBar(m.you, m.p50, m.p75, m.up)}
@@ -2819,36 +2819,36 @@ function renderCashflowPrediction() {
       const badge = e.certain
         ? `<span style="font-size:9px;background:var(--cream2);color:var(--warm);padding:1px 6px;border-radius:20px;font-weight:700;">Точно</span>`
         : `<span style="font-size:9px;background:${e.prob>=80?'rgba(42,110,70,.1)':'rgba(184,50,40,.1)'};color:${e.prob>=80?'var(--green)':'var(--red)'};padding:1px 6px;border-radius:20px;font-weight:700;">${e.prob}%</span>`;
-      return `<div style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--border);">
-        <span style="font-size:10px;color:var(--warm);flex-shrink:0;line-height:1;">${TYPE_ICON[e.type]||'•'}</span>
-        <div style="flex:1;min-width:0;overflow:hidden;">
-          <span style="font-size:12px;font-weight:600;color:var(--ink);">${esc(e.text)}</span>
-          <span style="font-size:11px;color:var(--warm);margin-left:5px;">${esc(e.date)}</span>
+      return `<div style="display:flex;align-items:center;gap:5px;padding:6px 0;border-bottom:1px solid var(--border);flex-wrap:nowrap;">
+        <span style="font-size:9px;color:var(--warm);flex-shrink:0;line-height:1;">•</span>
+        <div style="flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">
+          <span style="font-size:11px;font-weight:600;color:var(--ink);">${esc(e.text)}</span>
+          <span style="font-size:10px;color:var(--warm);margin-left:4px;">${esc(e.date)}</span>
         </div>
-        <span style="flex-shrink:0;">${badge}</span>
-        <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:${eCol};white-space:nowrap;flex-shrink:0;">${fmtK(e.amount)}</span>
+        <span style="flex-shrink:0;font-size:8px;background:${e.certain?'var(--cream2)':(e.prob>=80?'rgba(42,110,70,.1)':'rgba(184,50,40,.1)')};color:${e.certain?'var(--warm)':(e.prob>=80?'var(--green)':'var(--red)')};padding:1px 5px;border-radius:20px;font-weight:700;">${e.certain?'Точно':e.prob+'%'}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:${eCol};white-space:nowrap;flex-shrink:0;">${fmtK(e.amount)}</span>
       </div>`;
     }).join('');
 
     return `
       <div class="card" style="border-top:3px solid ${mi===0?'var(--ink)':'var(--border)'};">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-          <div>
-            <div style="font-size:15px;font-weight:700;color:var(--ink);">${esc(m.label)}</div>
-            <div style="font-size:11px;color:var(--warm);margin-top:2px;">Прогноз балансу на кінець місяця</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:nowrap;">
+          <div style="min-width:0;">
+            <div style="font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.label)}</div>
+            <div style="font-size:10px;color:var(--warm);margin-top:1px;">Прогноз балансу</div>
           </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <div style="display:flex;gap:12px;flex-shrink:0;">
             <div style="text-align:right;">
-              <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--warm);">Net/міс</div>
-              <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${netCol};">${fmtK(net)}</div>
+              <div style="font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--warm);">Net</div>
+              <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:${netCol};">${fmtK(net)}</div>
             </div>
             <div style="text-align:right;">
-              <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--warm);">Баланс кінець</div>
-              <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:var(--ink);">₴${(m.balance_end/1_000_000).toFixed(2)}M</div>
+              <div style="font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--warm);">Баланс</div>
+              <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--ink);">₴${(m.balance_end/1_000_000).toFixed(2)}M</div>
             </div>
             <div style="text-align:right;">
-              <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--warm);">Точність прогнозу</div>
-              <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${confCol};">${m.confidence}%</div>
+              <div style="font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--warm);">Точність</div>
+              <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:${confCol};">${m.confidence}%</div>
             </div>
           </div>
         </div>
