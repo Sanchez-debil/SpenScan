@@ -2806,7 +2806,7 @@ function renderCashflowPrediction() {
   if (!el) return;
 
   const fmtK = v => v >= 0 ? '+₴' + (v/1000).toFixed(0) + 'K' : '−₴' + (Math.abs(v)/1000).toFixed(0) + 'K';
-  const TYPE_ICON = { payroll:'PR', invoice:'IN', tax:'TX', saas:'SW' };
+  const TYPE_ICON = { payroll:'•', invoice:'•', tax:'•', saas:'•' };
   const TYPE_COL  = { payroll:'var(--amber)', invoice:'var(--green)', tax:'var(--red)', saas:'var(--blue)' };
 
   const months = CF_PRED.months.map((m, mi) => {
@@ -2819,14 +2819,14 @@ function renderCashflowPrediction() {
       const badge = e.certain
         ? `<span style="font-size:9px;background:var(--cream2);color:var(--warm);padding:1px 6px;border-radius:20px;font-weight:700;">Точно</span>`
         : `<span style="font-size:9px;background:${e.prob>=80?'rgba(42,110,70,.1)':'rgba(184,50,40,.1)'};color:${e.prob>=80?'var(--green)':'var(--red)'};padding:1px 6px;border-radius:20px;font-weight:700;">${e.prob}%</span>`;
-      return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);">
-        <span style="font-size:14px;flex-shrink:0;">${TYPE_ICON[e.type]||'·'}</span>
-        <div style="flex:1;min-width:0;">
+      return `<div style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:10px;color:var(--warm);flex-shrink:0;line-height:1;">${TYPE_ICON[e.type]||'•'}</span>
+        <div style="flex:1;min-width:0;overflow:hidden;">
           <span style="font-size:12px;font-weight:600;color:var(--ink);">${esc(e.text)}</span>
-          <span style="font-size:11px;color:var(--warm);margin-left:6px;">${esc(e.date)}</span>
+          <span style="font-size:11px;color:var(--warm);margin-left:5px;">${esc(e.date)}</span>
         </div>
-        ${badge}
-        <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:${eCol};white-space:nowrap;">${fmtK(e.amount)}</span>
+        <span style="flex-shrink:0;">${badge}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:${eCol};white-space:nowrap;flex-shrink:0;">${fmtK(e.amount)}</span>
       </div>`;
     }).join('');
 
