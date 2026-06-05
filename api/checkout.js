@@ -1,6 +1,5 @@
 // Stripe Checkout — створити сесію оплати
-// ENV: STRIPE_SECRET_KEY, STRIPE_PRICE_STARTER_MONTHLY, STRIPE_PRICE_STARTER_YEARLY,
-//      STRIPE_PRICE_PRO_MONTHLY, STRIPE_PRICE_PRO_YEARLY, ALLOWED_ORIGIN
+// ENV: STRIPE_SECRET_KEY, STRIPE_PRICE_PRO_MONTHLY, ALLOWED_ORIGIN
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -10,10 +9,7 @@ module.exports = async function handler(req, res) {
 
   const { plan } = req.body || {};
   const PRICES = {
-    'starter-monthly': process.env.STRIPE_PRICE_STARTER_MONTHLY,
-    'starter-yearly':  process.env.STRIPE_PRICE_STARTER_YEARLY,
-    'pro-monthly':     process.env.STRIPE_PRICE_PRO_MONTHLY,
-    'pro-yearly':      process.env.STRIPE_PRICE_PRO_YEARLY,
+    'pro-monthly': process.env.STRIPE_PRICE_PRO_MONTHLY,
   };
 
   const priceId = PRICES[plan];
@@ -30,6 +26,7 @@ module.exports = async function handler(req, res) {
     success_url: `${origin}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url:  `${origin}/?checkout=cancel`,
     allow_promotion_codes: 'true',
+    'subscription_data[trial_period_days]': '14',
     'subscription_data[metadata][plan]': plan,
   });
 

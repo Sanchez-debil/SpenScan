@@ -51,6 +51,22 @@ function showToast(msg, type = 'info') {
   setTimeout(() => el.remove(), 3000);
 }
 
+function showProGate() {
+  document.querySelector('.pro-gate-modal')?.remove();
+  const m = document.createElement('div');
+  m.className = 'pro-gate-modal';
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;display:flex;align-items:center;justify-content:center;';
+  m.innerHTML = `
+    <div style="background:var(--white);border-radius:16px;padding:32px 28px;max-width:340px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.25);">
+      <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--ink);margin-bottom:8px;">Тільки для Про</div>
+      <div style="font-size:13px;color:var(--warm);margin-bottom:20px;line-height:1.5;">AI Агенти та Асистент доступні лише на плані Про.<br>14 днів безкоштовно — без карти не потрібно.</div>
+      <button onclick="nav('subscription');document.querySelector('.pro-gate-modal')?.remove();" style="width:100%;padding:12px;background:var(--ink);color:var(--cream);border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;">Спробувати Про безкоштовно →</button>
+      <button onclick="document.querySelector('.pro-gate-modal')?.remove();" style="width:100%;padding:10px;background:transparent;color:var(--warm);border:1.5px solid var(--border);border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Скасувати</button>
+    </div>`;
+  m.addEventListener('click', e => { if (e.target === m) m.remove(); });
+  document.body.appendChild(m);
+}
+
 // ══ CHART REGISTRY ══
 function mkChart(id, config) {
   // Destroy existing instance to prevent memory leak
@@ -398,7 +414,19 @@ function saveSub(data) {
 }
 
 function subPlan() {
-  return state.sub?.active ? (state.sub.plan || 'starter') : null;
+  // Free starter is always available; pro requires active paid sub
+  if (state.sub?.active && state.sub.plan === 'pro') return 'pro';
+  return 'starter';
+}
+
+function isPro() { return subPlan() === 'pro'; }
+
+function activateFreePlan() {
+  // Starter is free — just mark locally, no Stripe needed
+  state.sub = { active: true, plan: 'starter' };
+  localStorage.setItem('spenscan_sub', JSON.stringify(state.sub));
+  renderSubPage();
+  showToast('Стартер активовано', 'success');
 }
 
 async function startCheckout(plan) {
@@ -452,35 +480,10 @@ async function handleCheckoutReturn() {
   }
 }
 
-function toggleBilling(yearly) {
-  // Оновити ціни та data-checkout атрибути
-  const track = $('billingTrack');
-  const thumb = $('billingThumb');
-  if (track) track.style.background = yearly ? 'var(--ink)' : 'var(--border)';
-  if (thumb) thumb.style.transform   = yearly ? 'translateX(18px)' : '';
-
-  const sPrice = $('priceStarter');
-  const pPrice = $('pricePro');
-  const sNote  = $('pricingNoteStarter');
-  const pNote  = $('pricingNotePro');
-  const sBtn   = document.querySelector('[data-checkout^="starter"]');
-  const pBtn   = document.querySelector('[data-checkout^="pro"]');
-
-  if (yearly) {
-    if (sPrice) sPrice.textContent = '€12';
-    if (pPrice) pPrice.textContent = '€27';
-    if (sNote)  sNote.textContent  = '€144/рік — 2 місяці безкоштовно';
-    if (pNote)  pNote.textContent  = '€324/рік — 3 місяці безкоштовно';
-    if (sBtn)   sBtn.dataset.checkout = 'starter-yearly';
-    if (pBtn)   pBtn.dataset.checkout = 'pro-yearly';
-  } else {
-    if (sPrice) sPrice.textContent = '€15';
-    if (pPrice) pPrice.textContent = '€36';
-    if (sNote)  sNote.textContent  = 'або €144/рік (−20%)';
-    if (pNote)  pNote.textContent  = 'або €288/рік (−33%)';
-    if (sBtn)   sBtn.dataset.checkout = 'starter-monthly';
-    if (pBtn)   pBtn.dataset.checkout = 'pro-monthly';
-  }
+function updateAdBanner() {
+  const banner = $('adBanner');
+  if (!banner) return;
+  banner.style.display = isPro() ? 'none' : 'flex';
 }
 
 function renderSubPage() {
@@ -488,36 +491,36 @@ function renderSubPage() {
   const pg = $('pg-subscription');
   if (!pg) return;
 
-  const starterBtn = pg.querySelector('[data-checkout="starter-monthly"]');
-  const proBtn     = pg.querySelector('[data-checkout="pro-monthly"]');
-  const yearlyToggle = pg.querySelector('#billingToggle');
-
-  if (!plan) return; // не підписаний — кнопки залишаються активними
-
   // Підсвітити активний план
   pg.querySelectorAll('.sub-plan-card').forEach(c => c.removeAttribute('data-active'));
   const activeCard = pg.querySelector(`[data-plan="${plan}"]`);
   if (activeCard) activeCard.setAttribute('data-active', '1');
 
   // Кнопки
+  const starterBtn = pg.querySelector('[data-checkout="starter-free"]');
+  const proBtn     = pg.querySelector('[data-checkout="pro-monthly"]');
   if (starterBtn) {
-    if (plan === 'starter') { starterBtn.textContent = '✓ Ваш план'; starterBtn.disabled = true; }
-    else { starterBtn.textContent = 'Понизити'; starterBtn.disabled = false; }
+    if (plan === 'starter') { starterBtn.textContent = 'Ваш план'; starterBtn.disabled = true; }
+    else { starterBtn.textContent = 'Перейти на Стартер'; starterBtn.disabled = false; }
   }
   if (proBtn) {
-    if (plan === 'pro') { proBtn.textContent = '✓ Ваш план'; proBtn.disabled = true; }
-    else { proBtn.textContent = 'Оновити →'; proBtn.disabled = false; }
+    if (plan === 'pro') { proBtn.textContent = 'Ваш план'; proBtn.disabled = true; }
+    else { proBtn.textContent = 'Почати безкоштовно →'; proBtn.disabled = false; }
   }
 
-  // Показати email і дату закінчення
+  // Info bar — тільки для Про
   const infoEl = $('subActiveInfo');
-  if (infoEl && state.sub) {
-    const endDate = state.sub.periodEnd
-      ? new Date(state.sub.periodEnd * 1000).toLocaleDateString('uk-UA')
-      : '—';
-    infoEl.innerHTML = `<span style="color:var(--green);font-weight:600;">● Активна</span> · ${esc(state.sub.email || '')} · наступне списання ${endDate}`;
-    infoEl.style.display = 'flex';
+  if (infoEl) {
+    if (plan === 'pro' && state.sub?.periodEnd) {
+      const endDate = new Date(state.sub.periodEnd * 1000).toLocaleDateString('uk-UA');
+      infoEl.innerHTML = `<span style="color:var(--green);font-weight:600;">● Про активна</span> · ${esc(state.sub.email || '')} · наступне списання ${endDate}`;
+      infoEl.style.display = 'flex';
+    } else {
+      infoEl.style.display = 'none';
+    }
   }
+
+  updateAdBanner();
 }
 
 // ══ AI AUDIT ══
@@ -1008,7 +1011,14 @@ function initListeners() {
 
   // Sidebar navigation via data-page attribute (replaces inline onclick)
   document.querySelectorAll('.sb-item[data-page]').forEach(item => {
-    item.addEventListener('click', () => nav(item.dataset.page, item));
+    item.addEventListener('click', () => {
+      const page = item.dataset.page;
+      if (!isPro() && (page === 'agents' || page === 'assistant')) {
+        showProGate();
+        return;
+      }
+      nav(page, item);
+    });
   });
 
   // Period tabs
